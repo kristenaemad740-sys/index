@@ -27,8 +27,8 @@ export default function App() {
         )}
       </main>
 
-      {/* Global Footer for Home & Register */}
-      <Footer />
+      {/* Footer appears ONLY on Home page */}
+      {page === 'home' && <Footer />}
     </div>
   )
 }
