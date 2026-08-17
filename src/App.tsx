@@ -3,6 +3,7 @@ import { Page } from './types'
 import Header from './components/Header'
 import Home from './pages/Home'
 import Register from './pages/Register'
+import Footer from './components/Footer'
 
 export default function App() {
   const [page, setPage] = useState<Page>('home')
@@ -13,16 +14,21 @@ export default function App() {
   }
 
   return (
-    <div dir="rtl" className="min-h-screen text-slate-100" style={{ fontFamily: "'Cairo', sans-serif" }}>
+    <div dir="rtl" className="min-h-screen flex flex-col justify-between text-slate-100" style={{ fontFamily: "'Cairo', sans-serif" }}>
       {/* Fixed top Header */}
       <Header page={page} onNavigate={handleNavigate} />
 
       {/* Pages Router */}
-      {page === 'home' ? (
-        <Home onNavigate={handleNavigate} />
-      ) : (
-        <Register />
-      )}
+      <main className="flex-grow">
+        {page === 'home' ? (
+          <Home onNavigate={handleNavigate} />
+        ) : (
+          <Register />
+        )}
+      </main>
+
+      {/* Global Footer for Home & Register */}
+      <Footer />
     </div>
   )
 }

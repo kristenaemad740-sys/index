@@ -1,6 +1,5 @@
 import { Page, TEAMS } from '../types'
 import logoImg from '../assets/logo.jpg'
-import Footer from '../components/Footer'
 
 interface HomeProps {
   onNavigate: (p: Page) => void
@@ -263,8 +262,6 @@ export default function Home({ onNavigate }: HomeProps) {
           </button>
         </div>
       </section>
-
-      <Footer />
     </main>
   )
 }

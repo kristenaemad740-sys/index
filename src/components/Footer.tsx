@@ -3,7 +3,7 @@ import logoImg from '../assets/logo.jpg'
 export default function Footer() {
   return (
     <footer
-      className="py-8 px-4 text-center border-t"
+      className="py-8 px-4 text-center border-t relative z-10"
       style={{ background: '#040d1e', borderColor: 'rgba(245,166,35,0.1)' }}
     >
       <div className="max-w-4xl mx-auto flex flex-col items-center gap-2">
@@ -11,8 +11,8 @@ export default function Footer() {
         <p className="text-slate-400 text-sm font-medium">أسرة الكاروز — كنيسة العذراء مريم بالبداري</p>
         <p className="text-slate-500 text-xs">اليوم الرياضي للشباب</p>
         <div className="mt-3 pt-3 border-t border-white/5 w-full max-w-xs">
-          <p className="text-amber-400/80 text-xs font-semibold tracking-widest uppercase">
-            CREATING BY ENG SHAKER
+          <p className="text-amber-400/90 text-xs font-semibold tracking-wider">
+            Created by Eng. ShakerT
           </p>
         </div>
       </div>
