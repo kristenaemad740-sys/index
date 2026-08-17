@@ -64,8 +64,28 @@ function normalizeName(name) {
   return String(name).trim().replace(/\s+/g, ' ').toLowerCase();
 }
 
-// ── Friend Matching Logic (Hierarchical Priority Level 1 to 4) ────────────────
-function getMatchScore(friendName, participantName) {
+// ── Flexible Full Name Friend Matching Logic ──────────────────────────────────
+function isSubSequence(subWords, fullWords) {
+  if (!subWords || !fullWords || subWords.length === 0 || fullWords.length === 0) {
+    return false;
+  }
+  if (subWords.length > fullWords.length) {
+    return false;
+  }
+  for (var i = 0; i <= fullWords.length - subWords.length; i++) {
+    var match = true;
+    for (var j = 0; j < subWords.length; j++) {
+      if (fullWords[i + j] !== subWords[j]) {
+        match = false;
+        break;
+      }
+    }
+    if (match) return true;
+  }
+  return false;
+}
+
+function getMatchLength(friendName, participantName) {
   var normF = normalizeName(friendName);
   var normP = normalizeName(participantName);
   if (!normF || !normP) return 0;
@@ -73,41 +93,22 @@ function getMatchScore(friendName, participantName) {
   var fWords = normF.split(' ');
   var pWords = normP.split(' ');
 
-  // Level 1: Exact Full Name Match
+  // 1. Exact Match
   if (normF === normP) {
-    return 1;
+    return fWords.length;
   }
 
-  // Check if pWords contains fWords as a consecutive sequence or prefix
-  var isSubSequence = false;
-  for (var i = 0; i <= pWords.length - fWords.length; i++) {
-    var sliceMatch = true;
-    for (var j = 0; j < fWords.length; j++) {
-      if (pWords[i + j] !== fWords[j]) {
-        sliceMatch = false;
-        break;
-      }
-    }
-    if (sliceMatch) {
-      isSubSequence = true;
-      break;
-    }
+  // 2. Friend Name contains Participant Name completely (Word order preserved)
+  if (isSubSequence(pWords, fWords)) {
+    return pWords.length;
   }
 
-  if (!isSubSequence) {
-    if (normP.indexOf(normF + ' ') === 0 || normP.indexOf(' ' + normF) !== -1) {
-      isSubSequence = true;
-    }
+  // 3. Participant Name contains Friend Name completely (Word order preserved)
+  if (isSubSequence(fWords, pWords)) {
+    return fWords.length;
   }
 
-  if (isSubSequence) {
-    if (fWords.length >= 4) return 1; // Full Name Match
-    if (fWords.length === 3) return 2; // Three-Name Match
-    if (fWords.length === 2) return 3; // Two-Name Match
-    if (fWords.length === 1) return 4; // First Name Only Match
-  }
-
-  return 0; // No match
+  return 0;
 }
 
 function findMatchedTeamForFriend(fName, registeredParticipants) {
@@ -116,38 +117,43 @@ function findMatchedTeamForFriend(fName, registeredParticipants) {
     return null;
   }
 
-  var candidatesByScore = { 1: [], 2: [], 3: [], 4: [] };
-
+  var matches = [];
   registeredParticipants.forEach(function(p) {
-    var score = getMatchScore(fName, p.rawName);
-    if (score >= 1 && score <= 4) {
-      candidatesByScore[score].push(p);
+    var mlen = getMatchLength(fName, p.rawName);
+    if (mlen > 0) {
+      matches.push({ team: p.team, matchLength: mlen });
     }
   });
 
-  // Evaluate scores from highest priority (1) to lowest (4)
-  var scores = [1, 2, 3, 4];
-  for (var k = 0; k < scores.length; k++) {
-    var score = scores[k];
-    var candidates = candidatesByScore[score];
-    if (candidates.length > 0) {
-      var candidateTeams = [];
-      candidates.forEach(function(c) {
-        if (candidateTeams.indexOf(c.team) === -1) {
-          candidateTeams.push(c.team);
-        }
-      });
-
-      if (candidateTeams.length === 1) {
-        return candidateTeams[0]; // Unique team match at highest available priority level
-      } else {
-        return null; // Ambiguous match at this priority level -> Unresolved
-      }
-    }
+  if (matches.length === 0) {
+    return null;
   }
 
-  return null;
+  var maxLen = 0;
+  matches.forEach(function(m) {
+    if (m.matchLength > maxLen) {
+      maxLen = m.matchLength;
+    }
+  });
+
+  var topMatches = matches.filter(function(m) {
+    return m.matchLength === maxLen;
+  });
+
+  var topTeams = [];
+  topMatches.forEach(function(m) {
+    if (topTeams.indexOf(m.team) === -1) {
+      topTeams.push(m.team);
+    }
+  });
+
+  if (topTeams.length === 1) {
+    return topTeams[0];
+  } else {
+    return null; // Ambiguous match at highest match length level -> Unresolved
+  }
 }
+
 
 // ── Unique ID Generator ───────────────────────────────────────────────────────
 function generateUniqueId() {

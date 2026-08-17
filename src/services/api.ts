@@ -31,8 +31,28 @@ export function normalizeName(name: string): string {
     .toLowerCase()
 }
 
-// ── Hierarchical Friend Match Score ──────────────────────────────────────────
-export function getMatchScore(friendName: string, participantName: string): number {
+// ── Flexible Full Name Friend Matching Logic ──────────────────────────────────
+export function isSubSequence(subWords: string[], fullWords: string[]): boolean {
+  if (!subWords || !fullWords || subWords.length === 0 || fullWords.length === 0) {
+    return false
+  }
+  if (subWords.length > fullWords.length) {
+    return false
+  }
+  for (let i = 0; i <= fullWords.length - subWords.length; i++) {
+    let match = true
+    for (let j = 0; j < subWords.length; j++) {
+      if (fullWords[i + j] !== subWords[j]) {
+        match = false
+        break
+      }
+    }
+    if (match) return true
+  }
+  return false
+}
+
+export function getMatchLength(friendName: string, participantName: string): number {
   const normF = normalizeName(friendName)
   const normP = normalizeName(participantName)
   if (!normF || !normP) return 0
@@ -40,38 +60,19 @@ export function getMatchScore(friendName: string, participantName: string): numb
   const fWords = normF.split(' ')
   const pWords = normP.split(' ')
 
-  // Level 1: Exact Full Name Match
+  // 1. Exact Match
   if (normF === normP) {
-    return 1
+    return fWords.length
   }
 
-  // Check if pWords contains fWords as a consecutive sequence or prefix
-  let isSubSequence = false
-  for (let i = 0; i <= pWords.length - fWords.length; i++) {
-    let sliceMatch = true
-    for (let j = 0; j < fWords.length; j++) {
-      if (pWords[i + j] !== fWords[j]) {
-        sliceMatch = false
-        break
-      }
-    }
-    if (sliceMatch) {
-      isSubSequence = true
-      break
-    }
+  // 2. Friend Name contains Participant Name completely (Word order preserved)
+  if (isSubSequence(pWords, fWords)) {
+    return pWords.length
   }
 
-  if (!isSubSequence) {
-    if (normP.startsWith(normF + ' ') || normP.includes(' ' + normF)) {
-      isSubSequence = true
-    }
-  }
-
-  if (isSubSequence) {
-    if (fWords.length >= 4) return 1 // Full Name Match
-    if (fWords.length === 3) return 2 // Three-Name Match
-    if (fWords.length === 2) return 3 // Two-Name Match
-    if (fWords.length === 1) return 4 // First Name Only Match
+  // 3. Participant Name contains Friend Name completely (Word order preserved)
+  if (isSubSequence(fWords, pWords)) {
+    return fWords.length
   }
 
   return 0
@@ -83,30 +84,30 @@ export function findMatchedTeamForFriend(fName: string, registrations: Participa
     return null
   }
 
-  const candidatesByScore: Record<number, Participant[]> = { 1: [], 2: [], 3: [], 4: [] }
+  const matches: { team: string; matchLength: number }[] = []
 
   registrations.forEach(p => {
-    const score = getMatchScore(fName, p.name)
-    if (score >= 1 && score <= 4) {
-      candidatesByScore[score].push(p)
+    const mlen = getMatchLength(fName, p.name)
+    if (mlen > 0) {
+      matches.push({ team: p.team, matchLength: mlen })
     }
   })
 
-  const scores = [1, 2, 3, 4]
-  for (const score of scores) {
-    const candidates = candidatesByScore[score]
-    if (candidates.length > 0) {
-      const candidateTeams = Array.from(new Set(candidates.map(c => c.team)))
-      if (candidateTeams.length === 1) {
-        return candidateTeams[0]
-      } else {
-        return null // Ambiguous match at this priority level
-      }
-    }
+  if (matches.length === 0) {
+    return null
   }
 
-  return null
+  const maxLen = Math.max(...matches.map(m => m.matchLength))
+  const topMatches = matches.filter(m => m.matchLength === maxLen)
+  const topTeams = Array.from(new Set(topMatches.map(m => m.team)))
+
+  if (topTeams.length === 1) {
+    return topTeams[0]
+  } else {
+    return null // Ambiguous match at highest match length level -> Unresolved
+  }
 }
+
 
 // ── Get Local Storage Registrations ──────────────────────────────────────────
 export function getRegistrations(): Participant[] {
