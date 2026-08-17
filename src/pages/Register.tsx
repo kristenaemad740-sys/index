@@ -4,7 +4,7 @@ import { registerParticipant, validatePhone, normalizePhone } from '../services/
 import logoImg from '../assets/logo.jpg'
 
 // ── Arabic ordinal labels ────────────────────────────────────────────────────
-const ARABIC_ORDINALS = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس']
+const ARABIC_ORDINALS = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن']
 
 // ── Form State Interface ──────────────────────────────────────────────────────
 interface FormState {
@@ -590,7 +590,7 @@ export default function Register() {
                   كام شخص تفضّل تكون معاهم؟
                 </label>
                 <div className="flex gap-2 flex-wrap justify-end">
-                  {[1, 2, 3, 4, 5].map(n => (
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map(n => (
                     <button
                       key={n}
                       type="button"
