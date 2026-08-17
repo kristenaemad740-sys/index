@@ -31,16 +31,81 @@ export function normalizeName(name: string): string {
     .toLowerCase()
 }
 
-// ── Friend Matching Logic ────────────────────────────────────────────────────
-export function isFriendMatch(friendName: string, participantName: string): boolean {
+// ── Hierarchical Friend Match Score ──────────────────────────────────────────
+export function getMatchScore(friendName: string, participantName: string): number {
   const normF = normalizeName(friendName)
   const normP = normalizeName(participantName)
-  if (!normF || !normP) return false
+  if (!normF || !normP) return 0
 
-  if (normF === normP) return true
+  const fWords = normF.split(' ')
+  const pWords = normP.split(' ')
 
-  // Flexible substring match (e.g. "ريمون" matches "ريمون عصام")
-  return normP.includes(normF) || normF.includes(normP)
+  // Level 1: Exact Full Name Match
+  if (normF === normP) {
+    return 1
+  }
+
+  // Check if pWords contains fWords as a consecutive sequence or prefix
+  let isSubSequence = false
+  for (let i = 0; i <= pWords.length - fWords.length; i++) {
+    let sliceMatch = true
+    for (let j = 0; j < fWords.length; j++) {
+      if (pWords[i + j] !== fWords[j]) {
+        sliceMatch = false
+        break
+      }
+    }
+    if (sliceMatch) {
+      isSubSequence = true
+      break
+    }
+  }
+
+  if (!isSubSequence) {
+    if (normP.startsWith(normF + ' ') || normP.includes(' ' + normF)) {
+      isSubSequence = true
+    }
+  }
+
+  if (isSubSequence) {
+    if (fWords.length >= 4) return 1 // Full Name Match
+    if (fWords.length === 3) return 2 // Three-Name Match
+    if (fWords.length === 2) return 3 // Two-Name Match
+    if (fWords.length === 1) return 4 // First Name Only Match
+  }
+
+  return 0
+}
+
+export function findMatchedTeamForFriend(fName: string, registrations: Participant[]): string | null {
+  const normF = normalizeName(fName)
+  if (!normF || !registrations || registrations.length === 0) {
+    return null
+  }
+
+  const candidatesByScore: Record<number, Participant[]> = { 1: [], 2: [], 3: [], 4: [] }
+
+  registrations.forEach(p => {
+    const score = getMatchScore(fName, p.name)
+    if (score >= 1 && score <= 4) {
+      candidatesByScore[score].push(p)
+    }
+  })
+
+  const scores = [1, 2, 3, 4]
+  for (const score of scores) {
+    const candidates = candidatesByScore[score]
+    if (candidates.length > 0) {
+      const candidateTeams = Array.from(new Set(candidates.map(c => c.team)))
+      if (candidateTeams.length === 1) {
+        return candidateTeams[0]
+      } else {
+        return null // Ambiguous match at this priority level
+      }
+    }
+  }
+
+  return null
 }
 
 // ── Get Local Storage Registrations ──────────────────────────────────────────
@@ -145,63 +210,83 @@ export async function registerParticipant(data: {
     return { status: 'success', participant: registrations[existingIndex], isExisting: true }
   }
 
-  // 2. Default Round-Robin Allocation
-  const sameGenderCount = registrations.filter(p => p.gender === data.gender).length
-  const rrTeamIndex = sameGenderCount % 4
-  let assignedTeamId = TEAMS[rrTeamIndex].id
+  // 2. Count current team sizes & gender counts
+  const teamSizes: Record<string, number> = { red: 0, green: 0, yellow: 0, black: 0 }
+  const genderCounts: Record<string, number> = { male: 0, female: 0 }
 
-  // 3. Smart & Fair Friend Matching Algorithm
+  registrations.forEach(p => {
+    if (p.team in teamSizes) teamSizes[p.team]++
+    if (p.gender in genderCounts) genderCounts[p.gender]++
+  })
+
+  let assignedTeamId = ''
+
+  // 3. Friend Matching Evaluation (Spec v4.0.0)
+  const teamFriendCounts: Record<string, number> = { red: 0, green: 0, yellow: 0, black: 0 }
+  let totalValidFriends = 0
+
   if (data.wantsFriends && data.friendNames.length > 0) {
-    const teamVotes: Record<string, number> = { red: 0, green: 0, yellow: 0, black: 0 }
-    let totalMatches = 0
-
     data.friendNames.forEach(fName => {
-      const normF = normalizeName(fName)
-      if (!normF) return
+      const matchedTeam = findMatchedTeamForFriend(fName, registrations)
+      if (matchedTeam && matchedTeam in teamFriendCounts) {
+        teamFriendCounts[matchedTeam]++
+        totalValidFriends++
+      }
+    })
+  }
 
-      const matchingParticipants = registrations.filter(p => isFriendMatch(fName, p.name))
+  const teamIds = TEAMS.map(t => t.id)
 
-      if (matchingParticipants.length === 1) {
-        // Unique single match (e.g. only 1 "ريمون")
-        const mTeam = matchingParticipants[0].team
-        if (teamVotes.hasOwnProperty(mTeam)) {
-          teamVotes[mTeam]++
-          totalMatches++
-        }
-      } else if (matchingParticipants.length > 1) {
-        // Multiple matches (e.g. "ريمون عصام" and "ريمون عماد")
-        const exactMatch = matchingParticipants.find(p => normalizeName(p.name) === normF)
-        if (exactMatch && teamVotes.hasOwnProperty(exactMatch.team)) {
-          teamVotes[exactMatch.team]++
-          totalMatches++
-        } else {
-          // Multiple candidates: split votes fairly for candidate team tie-breaking
-          matchingParticipants.forEach(p => {
-            if (teamVotes.hasOwnProperty(p.team)) {
-              teamVotes[p.team] += 0.5
-              totalMatches += 0.5
-            }
-          });
-        }
+  // Section 6: Friend Team Priority
+  if (totalValidFriends > 0) {
+    let maxFriends = 0
+    teamIds.forEach(t => {
+      if (teamFriendCounts[t] > maxFriends) {
+        maxFriends = teamFriendCounts[t]
       }
     })
 
-    if (totalMatches > 0) {
-      let maxVotes = 0
-      TEAMS.forEach(t => {
-        if (teamVotes[t.id] > maxVotes) {
-          maxVotes = teamVotes[t.id]
+    const topFriendTeams = teamIds.filter(t => teamFriendCounts[t] === maxFriends)
+
+    if (topFriendTeams.length === 1) {
+      assignedTeamId = topFriendTeams[0]
+    } else {
+      // Section 7: Team Balance among tied friend teams
+      let minSizeInTied = Infinity
+      topFriendTeams.forEach(t => {
+        if (teamSizes[t] < minSizeInTied) {
+          minSizeInTied = teamSizes[t]
         }
       })
 
-      const topTeams = TEAMS.filter(t => teamVotes[t.id] === maxVotes).map(t => t.id)
+      const balancedTeams = topFriendTeams.filter(t => teamSizes[t] === minSizeInTied)
 
-      if (topTeams.length === 1) {
-        assignedTeamId = topTeams[0]
-      } else if (topTeams.length > 1) {
-        const tieIndex = sameGenderCount % topTeams.length
-        assignedTeamId = topTeams[tieIndex]
+      if (balancedTeams.length === 1) {
+        assignedTeamId = balancedTeams[0]
+      } else {
+        // Section 8: Round-Robin Tie Breaker
+        const rrIndex = (genderCounts[data.gender] || 0) % balancedTeams.length
+        assignedTeamId = balancedTeams[rrIndex]
       }
+    }
+  }
+
+  // Section 9: No Friend Match -> Team Balance (Smallest Team First)
+  if (!assignedTeamId) {
+    let overallMinSize = Infinity
+    teamIds.forEach(t => {
+      if (teamSizes[t] < overallMinSize) {
+        overallMinSize = teamSizes[t]
+      }
+    })
+
+    const smallestTeams = teamIds.filter(t => teamSizes[t] === overallMinSize)
+
+    if (smallestTeams.length === 1) {
+      assignedTeamId = smallestTeams[0]
+    } else {
+      const rrIndexNoFriend = (genderCounts[data.gender] || 0) % smallestTeams.length
+      assignedTeamId = smallestTeams[rrIndexNoFriend]
     }
   }
 

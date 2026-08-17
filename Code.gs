@@ -1,7 +1,7 @@
 /**
  * ==============================================================================
  * 🏆 اليوم الرياضي - أسرة الكاروز (كنيسة العذراء مريم بالبداري)
- * Google Apps Script Backend (Phase 3 Production API - Smart & Fair Friend Matching)
+ * Google Apps Script Backend (Phase 3 Production API - Spec v4.0.0 Final Algorithm)
  * ==============================================================================
  */
 
@@ -64,15 +64,89 @@ function normalizeName(name) {
   return String(name).trim().replace(/\s+/g, ' ').toLowerCase();
 }
 
-function isFriendMatch(friendName, participantName) {
+// ── Friend Matching Logic (Hierarchical Priority Level 1 to 4) ────────────────
+function getMatchScore(friendName, participantName) {
   var normF = normalizeName(friendName);
   var normP = normalizeName(participantName);
-  if (!normF || !normP) return false;
+  if (!normF || !normP) return 0;
 
-  if (normF === normP) return true;
+  var fWords = normF.split(' ');
+  var pWords = normP.split(' ');
 
-  // Flexible substring match (e.g. "ريمون" matches "ريمون عصام")
-  return normP.indexOf(normF) !== -1 || normF.indexOf(normP) !== -1;
+  // Level 1: Exact Full Name Match
+  if (normF === normP) {
+    return 1;
+  }
+
+  // Check if pWords contains fWords as a consecutive sequence or prefix
+  var isSubSequence = false;
+  for (var i = 0; i <= pWords.length - fWords.length; i++) {
+    var sliceMatch = true;
+    for (var j = 0; j < fWords.length; j++) {
+      if (pWords[i + j] !== fWords[j]) {
+        sliceMatch = false;
+        break;
+      }
+    }
+    if (sliceMatch) {
+      isSubSequence = true;
+      break;
+    }
+  }
+
+  if (!isSubSequence) {
+    if (normP.indexOf(normF + ' ') === 0 || normP.indexOf(' ' + normF) !== -1) {
+      isSubSequence = true;
+    }
+  }
+
+  if (isSubSequence) {
+    if (fWords.length >= 4) return 1; // Full Name Match
+    if (fWords.length === 3) return 2; // Three-Name Match
+    if (fWords.length === 2) return 3; // Two-Name Match
+    if (fWords.length === 1) return 4; // First Name Only Match
+  }
+
+  return 0; // No match
+}
+
+function findMatchedTeamForFriend(fName, registeredParticipants) {
+  var normF = normalizeName(fName);
+  if (!normF || !registeredParticipants || registeredParticipants.length === 0) {
+    return null;
+  }
+
+  var candidatesByScore = { 1: [], 2: [], 3: [], 4: [] };
+
+  registeredParticipants.forEach(function(p) {
+    var score = getMatchScore(fName, p.rawName);
+    if (score >= 1 && score <= 4) {
+      candidatesByScore[score].push(p);
+    }
+  });
+
+  // Evaluate scores from highest priority (1) to lowest (4)
+  var scores = [1, 2, 3, 4];
+  for (var k = 0; k < scores.length; k++) {
+    var score = scores[k];
+    var candidates = candidatesByScore[score];
+    if (candidates.length > 0) {
+      var candidateTeams = [];
+      candidates.forEach(function(c) {
+        if (candidateTeams.indexOf(c.team) === -1) {
+          candidateTeams.push(c.team);
+        }
+      });
+
+      if (candidateTeams.length === 1) {
+        return candidateTeams[0]; // Unique team match at highest available priority level
+      } else {
+        return null; // Ambiguous match at this priority level -> Unresolved
+      }
+    }
+  }
+
+  return null;
 }
 
 // ── Unique ID Generator ───────────────────────────────────────────────────────
@@ -123,7 +197,7 @@ function doGet(e) {
   return createJsonResponse({
     status: 'online',
     service: 'Al-Karoz Sports Day API',
-    version: '3.4.0',
+    version: '4.0.0',
     timestamp: new Date().toISOString()
   });
 }
@@ -285,9 +359,10 @@ function handleRegistration(payload) {
     }
   }
 
-  // 4. Team Assignment Logic for NEW participants
+  // 4. Team Assignment Logic for NEW participants (Hierarchical Spec v4.0.0)
   var assignedTeam = '';
   var registeredParticipants = [];
+  var teamSizes = { red: 0, green: 0, yellow: 0, black: 0 };
   var genderCounts = { male: 0, female: 0 };
 
   for (var j = 1; j < displayRows.length; j++) {
@@ -299,80 +374,90 @@ function handleRegistration(payload) {
       genderCounts[pGender]++;
     }
 
+    if (pTeam && teamSizes.hasOwnProperty(pTeam)) {
+      teamSizes[pTeam]++;
+    }
+
     if (pName && pTeam) {
       registeredParticipants.push({
         rawName: pName,
-        team: pTeam
+        team: pTeam,
+        gender: pGender
       });
     }
   }
 
-  // Smart & Fair Friend Matching Algorithm
+  // ── Friend Matching Evaluation ──
+  var teamFriendCounts = { red: 0, green: 0, yellow: 0, black: 0 };
+  var totalValidFriends = 0;
+
   if (wantsFriends && friendNames.length > 0) {
-    var teamVotes = { red: 0, green: 0, yellow: 0, black: 0 };
-    var totalMatches = 0;
-
     friendNames.forEach(function(fName) {
-      var normF = normalizeName(fName);
-      if (!normF) return;
+      var matchedTeam = findMatchedTeamForFriend(fName, registeredParticipants);
+      if (matchedTeam && teamFriendCounts.hasOwnProperty(matchedTeam)) {
+        teamFriendCounts[matchedTeam]++;
+        totalValidFriends++;
+      }
+    });
+  }
 
-      var matchingParticipants = registeredParticipants.filter(function(p) {
-        return isFriendMatch(fName, p.rawName);
-      });
-
-      if (matchingParticipants.length === 1) {
-        // Unique single match (e.g. only 1 "ريمون" in the system)
-        var mTeam = matchingParticipants[0].team;
-        if (teamVotes.hasOwnProperty(mTeam)) {
-          teamVotes[mTeam]++;
-          totalMatches++;
-        }
-      } else if (matchingParticipants.length > 1) {
-        // Multiple matches (e.g. "ريمون عصام" and "ريمون عماد")
-        var exactMatch = matchingParticipants.find(function(p) {
-          return normalizeName(p.rawName) === normF;
-        });
-
-        if (exactMatch && teamVotes.hasOwnProperty(exactMatch.team)) {
-          teamVotes[exactMatch.team]++;
-          totalMatches++;
-        } else {
-          // Multiple candidates for a single-word name: split votes fairly for candidate team tie-breaking
-          matchingParticipants.forEach(function(p) {
-            if (teamVotes.hasOwnProperty(p.team)) {
-              teamVotes[p.team] += 0.5;
-              totalMatches += 0.5;
-            }
-          });
-        }
+  // Section 6: Friend Team Priority
+  if (totalValidFriends > 0) {
+    var maxFriends = 0;
+    TEAMS.forEach(function(t) {
+      if (teamFriendCounts[t] > maxFriends) {
+        maxFriends = teamFriendCounts[t];
       }
     });
 
-    if (totalMatches > 0) {
-      var maxVotes = 0;
-      TEAMS.forEach(function(t) {
-        if (teamVotes[t] > maxVotes) {
-          maxVotes = teamVotes[t];
+    var topFriendTeams = TEAMS.filter(function(t) {
+      return teamFriendCounts[t] === maxFriends;
+    });
+
+    if (topFriendTeams.length === 1) {
+      assignedTeam = topFriendTeams[0];
+    } else {
+      // Section 7: Team Balance among tied friend teams
+      var minSizeInTied = Infinity;
+      topFriendTeams.forEach(function(t) {
+        if (teamSizes[t] < minSizeInTied) {
+          minSizeInTied = teamSizes[t];
         }
       });
 
-      var topTeams = TEAMS.filter(function(t) {
-        return teamVotes[t] === maxVotes;
+      var balancedTeams = topFriendTeams.filter(function(t) {
+        return teamSizes[t] === minSizeInTied;
       });
 
-      if (topTeams.length === 1) {
-        assignedTeam = topTeams[0];
+      if (balancedTeams.length === 1) {
+        assignedTeam = balancedTeams[0];
       } else {
-        var tieIndex = genderCounts[gender] % topTeams.length;
-        assignedTeam = topTeams[tieIndex];
+        // Section 8: Round-Robin Tie Breaker
+        var rrIndex = genderCounts[gender] % balancedTeams.length;
+        assignedTeam = balancedTeams[rrIndex];
       }
     }
   }
 
-  // Fallback to standard gender-based Round-Robin
+  // Section 9: No Friend Match -> Team Balance (Smallest Team First)
   if (!assignedTeam) {
-    var rrIndex = genderCounts[gender] % TEAMS.length;
-    assignedTeam = TEAMS[rrIndex];
+    var overallMinSize = Infinity;
+    TEAMS.forEach(function(t) {
+      if (teamSizes[t] < overallMinSize) {
+        overallMinSize = teamSizes[t];
+      }
+    });
+
+    var smallestTeams = TEAMS.filter(function(t) {
+      return teamSizes[t] === overallMinSize;
+    });
+
+    if (smallestTeams.length === 1) {
+      assignedTeam = smallestTeams[0];
+    } else {
+      var rrIndexNoFriend = genderCounts[gender] % smallestTeams.length;
+      assignedTeam = smallestTeams[rrIndexNoFriend];
+    }
   }
 
   // 5. Generate Record
