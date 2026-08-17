@@ -1,7 +1,7 @@
 /**
  * ==============================================================================
  * 🏆 اليوم الرياضي - أسرة الكاروز (كنيسة العذراء مريم بالبداري)
- * Google Apps Script Backend (Phase 3 Production API - Ultra Robust)
+ * Google Apps Script Backend (Phase 3 Production API - Bulletproof & Fail-safe)
  * ==============================================================================
  */
 
@@ -35,7 +35,6 @@ function normalizePhone(phone) {
     str = phone.toFixed(0);
   } else {
     str = String(phone).trim();
-    // Handle scientific notation e.g. 1.287414593e+09 or floats
     if (str.indexOf('e') !== -1 || str.indexOf('E') !== -1) {
       var num = Number(str);
       if (!isNaN(num)) {
@@ -44,14 +43,11 @@ function normalizePhone(phone) {
     }
   }
 
-  // Remove single quotes if any and non-digits
   var cleaned = str.replace(/'/g, '').replace(/\D/g, '');
   
-  // If 12 digits starting with '20' (e.g. 201287414593) -> strip '20'
   if (cleaned.indexOf('20') === 0 && cleaned.length === 12) {
     cleaned = cleaned.substring(2);
   }
-  // If 10 digits starting with '1' (e.g. 1287414593 where 0 was stripped by Sheets) -> prepend '0'
   if (cleaned.length === 10 && cleaned.indexOf('1') === 0) {
     cleaned = '0' + cleaned;
   }
@@ -73,10 +69,8 @@ function isFriendMatch(friendName, participantName) {
   var normP = normalizeName(participantName);
   if (!normF || !normP) return false;
 
-  // Exact match
   if (normF === normP) return true;
 
-  // Flexible match: Requires requested friend name to have at least 2 words
   var fWords = normF.split(' ').filter(Boolean);
   if (fWords.length >= 2) {
     if (normP.indexOf(normF) !== -1 || normF.indexOf(normP) !== -1) {
@@ -101,7 +95,6 @@ function getSheetAndHeaderMap() {
     sheet.appendRow(REQUIRED_HEADERS);
   }
 
-  // Use getDisplayValues to get exact formatted strings from cells!
   var displayValues = sheet.getDataRange().getDisplayValues();
   var rawValues = sheet.getDataRange().getValues();
 
@@ -134,7 +127,7 @@ function doGet(e) {
   return createJsonResponse({
     status: 'online',
     service: 'Al-Karoz Sports Day API',
-    version: '3.1.0',
+    version: '3.2.0',
     timestamp: new Date().toISOString()
   });
 }
@@ -144,12 +137,10 @@ function doPost(e) {
   var acquired = false;
 
   try {
-    acquired = lock.tryLock(30000);
-    if (!acquired) {
-      return createJsonResponse({
-        success: false,
-        error: 'الخادم مشغول حاليًا، يرجى المحاولة بعد لحظات.'
-      });
+    try {
+      acquired = lock.tryLock(10000);
+    } catch (lErr) {
+      acquired = false;
     }
 
     var requestData = {};
@@ -168,11 +159,13 @@ function doPost(e) {
   } catch (err) {
     return createJsonResponse({
       success: false,
-      error: err.message || 'حدث خطأ غير متوقع أثناء معالجة الطلب.'
+      error: err.message || 'حدث خطأ أثناء التسجيل، حاول مرة أخرى.'
     });
   } finally {
     if (acquired) {
-      lock.releaseLock();
+      try {
+        lock.releaseLock();
+      } catch (rErr) {}
     }
   }
 }
@@ -230,7 +223,7 @@ function handleRegistration(payload) {
   var displayRows = sheetInfo.displayValues;
   var rawRows = sheetInfo.rawValues;
 
-  // 3. Ultra Robust Duplicate Check by Phone (checks display values AND raw values)
+  // 3. Ultra Robust Duplicate Check by Phone
   for (var i = 1; i < displayRows.length; i++) {
     var displayCellPhone = displayRows[i][map['phone']];
     var rawCellPhone = rawRows[i][map['phone']];
@@ -239,7 +232,6 @@ function handleRegistration(payload) {
     var existingPhoneFromRaw = normalizePhone(rawCellPhone);
     
     if (existingPhoneFromDisplay === phone || existingPhoneFromRaw === phone) {
-      // Participant exists! Return existing data without modifying anything
       var existingFriends = [];
       var rawFn = String(displayRows[i][map['friendNames']] || '');
       if (rawFn) {
@@ -252,7 +244,7 @@ function handleRegistration(payload) {
         data: {
           id: String(displayRows[i][map['id']] || ''),
           name: String(displayRows[i][map['name']] || ''),
-          phone: phone, // Return sanitized 11-digit phone '01287414593'
+          phone: phone,
           gender: String(displayRows[i][map['gender']] || ''),
           wantsFriends: String(displayRows[i][map['wantsFriends']]).toLowerCase() === 'true',
           friendsCount: Number(displayRows[i][map['friendsCount']]) || 0,
@@ -333,11 +325,9 @@ function handleRegistration(payload) {
   var newId = generateUniqueId();
   var registrationTime = Utilities.formatDate(new Date(), 'Africa/Cairo', "yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
 
-  // Construct Row Array matching Header Map exact order
   var newRow = new Array(REQUIRED_HEADERS.length);
   newRow[map['id']] = newId;
   newRow[map['name']] = name;
-  // FORCE PLAIN TEXT IN GOOGLE SHEETS by prepending single quote
   newRow[map['phone']] = "'" + phone;
   newRow[map['gender']] = gender;
   newRow[map['wantsFriends']] = wantsFriends;
