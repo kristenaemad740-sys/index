@@ -1,7 +1,7 @@
 /**
  * ==============================================================================
  * 🏆 اليوم الرياضي - أسرة الكاروز (كنيسة العذراء مريم بالبداري)
- * Google Apps Script Backend (Phase 3 Production API - Robust & Updatable)
+ * Google Apps Script Backend (Phase 3 Production API - Smart & Fair Friend Matching)
  * ==============================================================================
  */
 
@@ -71,13 +71,8 @@ function isFriendMatch(friendName, participantName) {
 
   if (normF === normP) return true;
 
-  var fWords = normF.split(' ').filter(Boolean);
-  if (fWords.length >= 2) {
-    if (normP.indexOf(normF) !== -1 || normF.indexOf(normP) !== -1) {
-      return true;
-    }
-  }
-  return false;
+  // Flexible substring match (e.g. "ريمون" matches "ريمون عصام")
+  return normP.indexOf(normF) !== -1 || normF.indexOf(normP) !== -1;
 }
 
 // ── Unique ID Generator ───────────────────────────────────────────────────────
@@ -128,7 +123,7 @@ function doGet(e) {
   return createJsonResponse({
     status: 'online',
     service: 'Al-Karoz Sports Day API',
-    version: '3.3.0',
+    version: '3.4.0',
     timestamp: new Date().toISOString()
   });
 }
@@ -312,19 +307,44 @@ function handleRegistration(payload) {
     }
   }
 
-  // Check Friend Matches
+  // Smart & Fair Friend Matching Algorithm
   if (wantsFriends && friendNames.length > 0) {
     var teamVotes = { red: 0, green: 0, yellow: 0, black: 0 };
     var totalMatches = 0;
 
     friendNames.forEach(function(fName) {
-      var match = registeredParticipants.find(function(p) {
+      var normF = normalizeName(fName);
+      if (!normF) return;
+
+      var matchingParticipants = registeredParticipants.filter(function(p) {
         return isFriendMatch(fName, p.rawName);
       });
 
-      if (match && teamVotes.hasOwnProperty(match.team)) {
-        teamVotes[match.team]++;
-        totalMatches++;
+      if (matchingParticipants.length === 1) {
+        // Unique single match (e.g. only 1 "ريمون" in the system)
+        var mTeam = matchingParticipants[0].team;
+        if (teamVotes.hasOwnProperty(mTeam)) {
+          teamVotes[mTeam]++;
+          totalMatches++;
+        }
+      } else if (matchingParticipants.length > 1) {
+        // Multiple matches (e.g. "ريمون عصام" and "ريمون عماد")
+        var exactMatch = matchingParticipants.find(function(p) {
+          return normalizeName(p.rawName) === normF;
+        });
+
+        if (exactMatch && teamVotes.hasOwnProperty(exactMatch.team)) {
+          teamVotes[exactMatch.team]++;
+          totalMatches++;
+        } else {
+          // Multiple candidates for a single-word name: split votes fairly for candidate team tie-breaking
+          matchingParticipants.forEach(function(p) {
+            if (teamVotes.hasOwnProperty(p.team)) {
+              teamVotes[p.team] += 0.5;
+              totalMatches += 0.5;
+            }
+          });
+        }
       }
     });
 

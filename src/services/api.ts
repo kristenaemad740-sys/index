@@ -39,13 +39,8 @@ export function isFriendMatch(friendName: string, participantName: string): bool
 
   if (normF === normP) return true
 
-  const fWords = normF.split(' ').filter(Boolean)
-  if (fWords.length >= 2) {
-    if (normP.includes(normF) || normF.includes(normP)) {
-      return true
-    }
-  }
-  return false
+  // Flexible substring match (e.g. "ريمون" matches "ريمون عصام")
+  return normP.includes(normF) || normF.includes(normP)
 }
 
 // ── Get Local Storage Registrations ──────────────────────────────────────────
@@ -155,36 +150,57 @@ export async function registerParticipant(data: {
   const rrTeamIndex = sameGenderCount % 4
   let assignedTeamId = TEAMS[rrTeamIndex].id
 
-  // 3. Friend Priority Algorithm
+  // 3. Smart & Fair Friend Matching Algorithm
   if (data.wantsFriends && data.friendNames.length > 0) {
-    const matchedFriends = registrations.filter(p =>
-      data.friendNames.some(fn => isFriendMatch(fn, p.name))
-    )
+    const teamVotes: Record<string, number> = { red: 0, green: 0, yellow: 0, black: 0 }
+    let totalMatches = 0
 
-    if (matchedFriends.length > 0) {
-      const teamCounts: Record<string, number> = {}
-      matchedFriends.forEach(f => {
-        teamCounts[f.team] = (teamCounts[f.team] || 0) + 1
-      })
+    data.friendNames.forEach(fName => {
+      const normF = normalizeName(fName)
+      if (!normF) return
 
-      let maxCount = 0
-      let candidateTeams: string[] = []
+      const matchingParticipants = registrations.filter(p => isFriendMatch(fName, p.name))
 
-      for (const teamId in teamCounts) {
-        const count = teamCounts[teamId]
-        if (count > maxCount) {
-          maxCount = count
-          candidateTeams = [teamId]
-        } else if (count === maxCount) {
-          candidateTeams.push(teamId)
+      if (matchingParticipants.length === 1) {
+        // Unique single match (e.g. only 1 "ريمون")
+        const mTeam = matchingParticipants[0].team
+        if (teamVotes.hasOwnProperty(mTeam)) {
+          teamVotes[mTeam]++
+          totalMatches++
+        }
+      } else if (matchingParticipants.length > 1) {
+        // Multiple matches (e.g. "ريمون عصام" and "ريمون عماد")
+        const exactMatch = matchingParticipants.find(p => normalizeName(p.name) === normF)
+        if (exactMatch && teamVotes.hasOwnProperty(exactMatch.team)) {
+          teamVotes[exactMatch.team]++
+          totalMatches++
+        } else {
+          // Multiple candidates: split votes fairly for candidate team tie-breaking
+          matchingParticipants.forEach(p => {
+            if (teamVotes.hasOwnProperty(p.team)) {
+              teamVotes[p.team] += 0.5
+              totalMatches += 0.5
+            }
+          });
         }
       }
+    })
 
-      if (candidateTeams.length === 1) {
-        assignedTeamId = candidateTeams[0]
-      } else if (candidateTeams.length > 1) {
-        const tieIndex = sameGenderCount % candidateTeams.length
-        assignedTeamId = candidateTeams[tieIndex]
+    if (totalMatches > 0) {
+      let maxVotes = 0
+      TEAMS.forEach(t => {
+        if (teamVotes[t.id] > maxVotes) {
+          maxVotes = teamVotes[t.id]
+        }
+      })
+
+      const topTeams = TEAMS.filter(t => teamVotes[t.id] === maxVotes).map(t => t.id)
+
+      if (topTeams.length === 1) {
+        assignedTeamId = topTeams[0]
+      } else if (topTeams.length > 1) {
+        const tieIndex = sameGenderCount % topTeams.length
+        assignedTeamId = topTeams[tieIndex]
       }
     }
   }
