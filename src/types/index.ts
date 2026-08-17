@@ -1,5 +1,5 @@
 export type Page = 'home' | 'register'
-export type RegisterView = 'form' | 'confirm' | 'loading' | 'success' | 'error' | 'closed'
+export type RegisterView = 'form' | 'confirm' | 'loading' | 'success' | 'error' | 'closed' | 'already_registered'
 export type Gender = 'male' | 'female'
 
 export interface FormData {

@@ -37,10 +37,8 @@ export function isFriendMatch(friendName: string, participantName: string): bool
   const normP = normalizeName(participantName)
   if (!normF || !normP) return false
 
-  // Exact match
   if (normF === normP) return true
 
-  // Flexible match: Requires requested friend name to have at least 2 words
   const fWords = normF.split(' ').filter(Boolean)
   if (fWords.length >= 2) {
     if (normP.includes(normF) || normF.includes(normP)) {
@@ -78,12 +76,13 @@ export async function registerParticipant(data: {
   wantsFriends: boolean
   friendsCount: number
   friendNames: string[]
-}): Promise<{ status: 'success' | 'error'; participant: Participant; error?: string }> {
-  // If Production Google Script URL is configured, use Google Apps Script!
+  isUpdate?: boolean
+}): Promise<{ status: 'success' | 'error'; participant: Participant; isExisting?: boolean; error?: string }> {
   if (SCRIPT_URL && SCRIPT_URL.trim() !== '') {
     try {
       const payload = {
-        action: 'register',
+        action: data.isUpdate ? 'update' : 'register',
+        isUpdate: data.isUpdate === true,
         name: data.name,
         phone: data.phone,
         gender: data.gender,
@@ -119,7 +118,7 @@ export async function registerParticipant(data: {
           team: p.team,
           registrationTime: p.registrationTime
         }
-        return { status: 'success', participant }
+        return { status: 'success', participant, isExisting: resData.existing === true }
       } else {
         return { status: 'error', participant: null as unknown as Participant, error: resData.error || 'تعذر التسجيل' }
       }
@@ -130,18 +129,25 @@ export async function registerParticipant(data: {
   }
 
   // ── Mock Fallback (when VITE_GOOGLE_SCRIPT_URL is not set) ────────────────
-  await new Promise(resolve => setTimeout(resolve, 1200))
+  await new Promise(resolve => setTimeout(resolve, 800))
 
   const normalizedPhoneNum = normalizePhone(data.phone)
   const registrations = getRegistrations()
 
-  // 1. Duplicate Prevention
-  const existing = registrations.find(p => normalizePhone(p.phone) === normalizedPhoneNum)
-  if (existing) {
-    return {
-      status: 'success',
-      participant: existing
+  // 1. Duplicate Prevention & Update Logic
+  const existingIndex = registrations.findIndex(p => normalizePhone(p.phone) === normalizedPhoneNum)
+  if (existingIndex !== -1) {
+    if (data.isUpdate) {
+      const existing = registrations[existingIndex]
+      existing.name = data.name.trim()
+      existing.gender = data.gender
+      existing.wantsFriends = data.wantsFriends
+      existing.friendsCount = data.wantsFriends ? data.friendsCount : 0
+      existing.friendNames = data.wantsFriends ? data.friendNames.map(n => n.trim()) : []
+      saveRegistrations(registrations)
+      return { status: 'success', participant: existing, isExisting: false }
     }
+    return { status: 'success', participant: registrations[existingIndex], isExisting: true }
   }
 
   // 2. Default Round-Robin Allocation

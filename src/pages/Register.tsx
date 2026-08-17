@@ -12,7 +12,7 @@ interface FormState {
   phone: string
   gender: Gender | ''
   preference: 'yes' | 'no' | ''
-  friendsCount: number   // 0 = not selected yet
+  friendsCount: number
   friendNames: string[]
 }
 
@@ -50,6 +50,7 @@ export default function Register() {
   const [errors, setErrors] = useState<Partial<Record<keyof FormState | 'friendNames', string>>>({})
   const [participant, setParticipant] = useState<Participant | null>(null)
   const [errorMsg, setErrorMsg] = useState('تعذر الاتصال بالخادم.')
+  const [isUpdateMode, setIsUpdateMode] = useState<boolean>(false)
 
   const activeTeam = participant ? getTeamById(participant.team) : TEAMS[0]
 
@@ -102,12 +103,17 @@ export default function Register() {
         gender: form.gender as Gender,
         wantsFriends,
         friendsCount: wantsFriends ? form.friendsCount : 0,
-        friendNames: wantsFriends ? form.friendNames : []
+        friendNames: wantsFriends ? form.friendNames : [],
+        isUpdate: isUpdateMode
       })
 
       if (result.status === 'success') {
         setParticipant(result.participant)
-        setView('success')
+        if (result.isExisting && !isUpdateMode) {
+          setView('already_registered')
+        } else {
+          setView('success')
+        }
       } else {
         setErrorMsg('حدث خطأ أثناء التسجيل، حاول مرة أخرى.')
         setView('error')
@@ -122,7 +128,6 @@ export default function Register() {
   function handleFriendsCountSelect(count: number) {
     setForm(f => {
       const prevNames = f.friendNames
-      // Preserve previously typed names up to new count
       const newNames = Array.from({ length: count }, (_, i) => prevNames[i] ?? '')
       return { ...f, friendsCount: count, friendNames: newNames }
     })
@@ -149,8 +154,105 @@ export default function Register() {
               style={{ animationDirection: 'reverse', animationDuration: '0.8s' }}
             />
           </div>
-          <p className="text-amber-400 font-bold text-lg animate-pulse-gold">جاري التسجيل...</p>
+          <p className="text-amber-400 font-bold text-lg animate-pulse-gold">
+            {isUpdateMode ? 'جاري تحديث البيانات...' : 'جاري التسجيل...'}
+          </p>
           <p className="text-slate-400 text-sm mt-2">من فضلك انتظر</p>
+        </div>
+      </div>
+    )
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // ALREADY REGISTERED VIEW
+  // ════════════════════════════════════════════════════════════════════════════
+  if (view === 'already_registered' && participant) {
+    return (
+      <div
+        className={containerClass}
+        style={{ background: `linear-gradient(135deg, #040d1e 0%, ${activeTeam.bg} 100%)` }}
+      >
+        <SportsBg />
+        <div className="w-full max-w-md relative z-10 animate-float-up">
+          <div className="text-center mb-6">
+            <div className="text-5xl mb-3">📱</div>
+            <h1 className="text-2xl font-black text-white mb-1">أنت مسجل بالفعل!</h1>
+            <p className="text-amber-400 text-sm font-semibold">
+              تم العثور على بيانات تسجيل سابقة برقم الهاتف هذا
+            </p>
+          </div>
+
+          <div
+            className={`glass-card rounded-3xl p-6 mb-6 ${activeTeam.glowClass}`}
+            style={{ border: `1px solid ${activeTeam.color}55` }}
+          >
+            <div className="text-center mb-6">
+              <div className="text-5xl mb-2">{activeTeam.emoji}</div>
+              <div className="text-2xl font-black" style={{ color: activeTeam.color }}>
+                {activeTeam.name}
+              </div>
+              <p className="text-slate-400 text-xs mt-1">فريقك المسجل</p>
+            </div>
+
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between items-center py-2.5 border-b border-white/10">
+                <span className="font-bold text-white">{participant.name}</span>
+                <span className="text-slate-400">الاسم</span>
+              </div>
+              <div className="flex justify-between items-center py-2.5 border-b border-white/10">
+                <span className="font-bold text-white text-left" dir="ltr">
+                  {normalizePhone(participant.phone)}
+                </span>
+                <span className="text-slate-400">رقم الهاتف</span>
+              </div>
+              <div className="flex justify-between items-center py-2.5 border-b border-white/10">
+                <span className="font-bold text-amber-400">
+                  {participant.gender === 'male' ? '👦 ولد' : '👧 بنت'}
+                </span>
+                <span className="text-slate-400">النوع</span>
+              </div>
+              {participant.wantsFriends && participant.friendNames.length > 0 && (
+                <div className="flex justify-between items-start py-2.5">
+                  <div className="text-right max-w-[60%]">
+                    {participant.friendNames.map((name, i) => (
+                      <p key={i} className="font-bold text-amber-300 text-xs mb-0.5">{name}</p>
+                    ))}
+                  </div>
+                  <span className="text-slate-400 shrink-0 mr-2">الأصدقاء</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              setForm({
+                name: participant.name,
+                phone: participant.phone,
+                gender: participant.gender,
+                preference: participant.wantsFriends ? 'yes' : 'no',
+                friendsCount: participant.friendsCount || 0,
+                friendNames: participant.friendNames || []
+              })
+              setIsUpdateMode(true)
+              setView('form')
+            }}
+            className="w-full py-4 rounded-2xl font-black text-lg transition-all hover:scale-105 active:scale-95 mb-3 cursor-pointer"
+            style={{
+              background: 'linear-gradient(135deg, #F5A623, #D97706)',
+              color: '#040d1e',
+              boxShadow: '0 4px 20px rgba(245,166,35,0.4)'
+            }}
+          >
+            تعديل البيانات ✏️
+          </button>
+
+          <button
+            onClick={() => setView('success')}
+            className="w-full py-3 rounded-xl text-slate-300 hover:text-white text-sm transition-colors cursor-pointer border border-white/10 glass-card"
+          >
+            عرض بطاقة فريقك ✓
+          </button>
         </div>
       </div>
     )
@@ -169,7 +271,9 @@ export default function Register() {
         <div className="w-full max-w-md relative z-10 animate-celebrate">
           <div className="text-center mb-8">
             <div className="text-6xl mb-4">{activeTeam.emoji}</div>
-            <h1 className="text-3xl font-black text-white mb-2">تم تسجيلك بنجاح! 🎉</h1>
+            <h1 className="text-3xl font-black text-white mb-2">
+              {isUpdateMode ? 'تم تحديث بياناتك بنجاح! 🎉' : 'تم تسجيلك بنجاح! 🎉'}
+            </h1>
             <div className="text-amber-300 text-lg font-semibold">مبروك عليك!</div>
           </div>
 
@@ -265,8 +369,10 @@ export default function Register() {
         <div className="w-full max-w-md relative z-10 animate-float-up">
           <div className="text-center mb-6">
             <div className="text-4xl mb-3">📋</div>
-            <h1 className="text-2xl font-black text-white">تأكيد التسجيل</h1>
-            <p className="text-slate-400 text-sm mt-1">تأكد من صحة البيانات قبل التسجيل</p>
+            <h1 className="text-2xl font-black text-white">
+              {isUpdateMode ? 'تأكيد تعديل البيانات' : 'تأكيد التسجيل'}
+            </h1>
+            <p className="text-slate-400 text-sm mt-1">تأكد من صحة البيانات قبل الحفظ</p>
           </div>
 
           <div className="glass-card rounded-3xl p-6 mb-4 gold-glow">
@@ -306,13 +412,6 @@ export default function Register() {
             </div>
           </div>
 
-          <div className="glass-card rounded-2xl p-4 mb-6 text-center">
-            <p className="text-slate-400 text-sm">سيتم تعيين فريقك تلقائيًا بعد التسجيل</p>
-            <div className="flex justify-center gap-2 mt-2">
-              {TEAMS.map(t => <span key={t.id} className="text-lg">{t.emoji}</span>)}
-            </div>
-          </div>
-
           <button
             onClick={handleConfirm}
             className="w-full py-4 rounded-2xl font-black text-lg transition-all hover:scale-105 active:scale-95 mb-3 cursor-pointer"
@@ -322,7 +421,7 @@ export default function Register() {
               boxShadow: '0 4px 20px rgba(245,166,35,0.4)'
             }}
           >
-            تأكيد التسجيل ✓
+            {isUpdateMode ? 'حفظ التعديلات ✓' : 'تأكيد التسجيل ✓'}
           </button>
 
           <button
@@ -393,7 +492,9 @@ export default function Register() {
         {/* ── Form panel ── */}
         <div className="w-full max-w-xl mx-auto lg:max-w-none animate-float-up stagger-1" style={{ animationFillMode: 'forwards', opacity: 0 }}>
           <div className="glass-card rounded-3xl p-6 sm:p-8">
-            <h1 className="text-2xl font-black text-white mb-1 text-right">سجّل في اليوم الرياضي</h1>
+            <h1 className="text-2xl font-black text-white mb-1 text-right">
+              {isUpdateMode ? 'تعديل البيانات المسجلة' : 'سجّل في اليوم الرياضي'}
+            </h1>
             <p className="text-slate-400 text-sm mb-6 text-right">كنيسة العذراء مريم بالبداري</p>
 
             {/* ── Name ── */}
@@ -420,7 +521,8 @@ export default function Register() {
                 onChange={e => { setForm(f => ({ ...f, phone: e.target.value })); setErrors(er => ({ ...er, phone: '' })) }}
                 placeholder="01xxxxxxxxx"
                 dir="ltr"
-                className="w-full px-4 py-3.5 rounded-xl text-white text-left outline-none transition-all"
+                disabled={isUpdateMode}
+                className={`w-full px-4 py-3.5 rounded-xl text-white text-left outline-none transition-all ${isUpdateMode ? 'opacity-60 cursor-not-allowed' : ''}`}
                 style={inputStyle(!!errors.phone)}
               />
               {errors.phone && <p className="text-red-400 text-xs mt-1 text-right">{errors.phone}</p>}
@@ -466,7 +568,6 @@ export default function Register() {
                       setForm(f => ({
                         ...f,
                         preference: opt.value,
-                        // reset friends if switching to no
                         friendsCount: opt.value === 'no' ? 0 : f.friendsCount,
                         friendNames: opt.value === 'no' ? [] : f.friendNames
                       }))
@@ -542,7 +643,7 @@ export default function Register() {
                 boxShadow: '0 4px 20px rgba(245,166,35,0.4)'
               }}
             >
-              التالي ←
+              {isUpdateMode ? 'مراجعة التعديلات ←' : 'التالي ←'}
             </button>
           </div>
         </div>

@@ -1,7 +1,7 @@
 /**
  * ==============================================================================
  * 🏆 اليوم الرياضي - أسرة الكاروز (كنيسة العذراء مريم بالبداري)
- * Google Apps Script Backend (Phase 3 Production API - Bulletproof & Fail-safe)
+ * Google Apps Script Backend (Phase 3 Production API - Robust & Updatable)
  * ==============================================================================
  */
 
@@ -107,12 +107,13 @@ function getSheetAndHeaderMap() {
   var headers = displayValues[0].map(function(h) { return String(h).trim(); });
   var map = {};
   
-  REQUIRED_HEADERS.forEach(function(req) {
+  REQUIRED_HEADERS.forEach(function(req, defaultIndex) {
     var index = headers.indexOf(req);
     if (index === -1) {
-      throw new Error('جدول البيانات غير مكتمل الإعداد. العمود المطلوب مفقود: ' + req);
+      map[req] = defaultIndex;
+    } else {
+      map[req] = index;
     }
-    map[req] = index;
   });
 
   return { sheet: sheet, map: map, displayValues: displayValues, rawValues: rawValues };
@@ -127,7 +128,7 @@ function doGet(e) {
   return createJsonResponse({
     status: 'online',
     service: 'Al-Karoz Sports Day API',
-    version: '3.2.0',
+    version: '3.3.0',
     timestamp: new Date().toISOString()
   });
 }
@@ -179,6 +180,7 @@ function handleRegistration(payload) {
   var rawWantsFriends = payload.wantsFriends === true || payload.wantsFriends === 'true';
   var rawFriendsCount = Number(payload.friendsCount) || 0;
   var rawFriendNames = Array.isArray(payload.friendNames) ? payload.friendNames : [];
+  var isUpdate = payload.isUpdate === true || payload.isUpdate === 'true' || payload.action === 'update';
 
   if (!rawName || !String(rawName).trim()) {
     return createJsonResponse({ success: false, error: 'من فضلك أدخل اسمك' });
@@ -223,7 +225,7 @@ function handleRegistration(payload) {
   var displayRows = sheetInfo.displayValues;
   var rawRows = sheetInfo.rawValues;
 
-  // 3. Ultra Robust Duplicate Check by Phone
+  // 3. Ultra Robust Duplicate Check & Update Handler
   for (var i = 1; i < displayRows.length; i++) {
     var displayCellPhone = displayRows[i][map['phone']];
     var rawCellPhone = rawRows[i][map['phone']];
@@ -232,6 +234,38 @@ function handleRegistration(payload) {
     var existingPhoneFromRaw = normalizePhone(rawCellPhone);
     
     if (existingPhoneFromDisplay === phone || existingPhoneFromRaw === phone) {
+      var rowIndex = i + 1; // 1-based row number
+      var existingId = String(displayRows[i][map['id']] || '');
+      var existingTeam = String(displayRows[i][map['team']] || '');
+      var existingRegTime = String(displayRows[i][map['registrationTime']] || '');
+
+      // If client requests an UPDATE to their existing record:
+      if (isUpdate) {
+        sheet.getRange(rowIndex, map['name'] + 1).setValue(name);
+        sheet.getRange(rowIndex, map['gender'] + 1).setValue(gender);
+        sheet.getRange(rowIndex, map['wantsFriends'] + 1).setValue(wantsFriends);
+        sheet.getRange(rowIndex, map['friendsCount'] + 1).setValue(friendsCount);
+        sheet.getRange(rowIndex, map['friendNames'] + 1).setValue(friendNames.join(', '));
+
+        return createJsonResponse({
+          success: true,
+          existing: false,
+          updated: true,
+          data: {
+            id: existingId,
+            name: name,
+            phone: phone,
+            gender: gender,
+            wantsFriends: wantsFriends,
+            friendsCount: friendsCount,
+            friendNames: friendNames,
+            team: existingTeam,
+            registrationTime: existingRegTime
+          }
+        });
+      }
+
+      // Default: Return existing record with existing: true flag
       var existingFriends = [];
       var rawFn = String(displayRows[i][map['friendNames']] || '');
       if (rawFn) {
@@ -242,21 +276,21 @@ function handleRegistration(payload) {
         success: true,
         existing: true,
         data: {
-          id: String(displayRows[i][map['id']] || ''),
+          id: existingId,
           name: String(displayRows[i][map['name']] || ''),
           phone: phone,
           gender: String(displayRows[i][map['gender']] || ''),
           wantsFriends: String(displayRows[i][map['wantsFriends']]).toLowerCase() === 'true',
           friendsCount: Number(displayRows[i][map['friendsCount']]) || 0,
           friendNames: existingFriends,
-          team: String(displayRows[i][map['team']] || ''),
-          registrationTime: String(displayRows[i][map['registrationTime']] || '')
+          team: existingTeam,
+          registrationTime: existingRegTime
         }
       });
     }
   }
 
-  // 4. Team Assignment Logic
+  // 4. Team Assignment Logic for NEW participants
   var assignedTeam = '';
   var registeredParticipants = [];
   var genderCounts = { male: 0, female: 0 };
