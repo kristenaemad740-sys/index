@@ -1,0 +1,12 @@
+{
+  "title": "اليوم الرياضي لأسرة الكاروز",
+  "description": "الموقع الرسمي للتسجيل في اليوم الرياضي لأسرة الكاروز - كنيسة العذراء مريم بالبداري",
+  "language": "ar",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
