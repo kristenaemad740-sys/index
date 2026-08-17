@@ -144,7 +144,7 @@ function doPost(e) {
   var acquired = false;
 
   try {
-    acquired = lock.waitLock(30000);
+    acquired = lock.tryLock(30000);
     if (!acquired) {
       return createJsonResponse({
         success: false,
