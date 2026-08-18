@@ -6,79 +6,7 @@ import logoImg from '../assets/logo.jpg'
 // ── Arabic ordinal labels ────────────────────────────────────────────────────
 const ARABIC_ORDINALS = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس']
 
-// ── Target Date for Countdown (27 August 2026 - 8:00 AM) ──────────────────────
-const TARGET_DATE = new Date('2026-08-27T08:00:00+03:00').getTime()
 
-function RegisterCompactCountdown() {
-  const [timeLeft, setTimeLeft] = useState(() => {
-    const diff = TARGET_DATE - new Date().getTime()
-    if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: true }
-    return {
-      days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-      hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-      minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
-      seconds: Math.floor((diff % (1000 * 60)) / 1000),
-      isExpired: false
-    }
-  })
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const diff = TARGET_DATE - new Date().getTime()
-      if (diff <= 0) {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: true })
-      } else {
-        setTimeLeft({
-          days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-          minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
-          seconds: Math.floor((diff % (1000 * 60)) / 1000),
-          isExpired: false
-        })
-      }
-    }, 1000)
-    return () => clearInterval(timer)
-  }, [])
-
-  const pad = (n: number) => n.toString().padStart(2, '0')
-
-  if (timeLeft.isExpired) {
-    return (
-      <div className="mb-5 p-3 rounded-2xl bg-amber-500/20 border border-amber-400/40 text-center text-amber-300 font-bold text-xs sm:text-sm animate-pulse-gold">
-        🔥 المنافسة بدأت! 🏆
-      </div>
-    )
-  }
-
-  return (
-    <div className="mb-5 p-3 sm:p-3.5 rounded-2xl bg-slate-900/70 border border-amber-500/30 flex items-center justify-between gap-2 text-right shadow-inner">
-      <div className="flex items-center gap-2">
-        <span className="text-lg">⏳</span>
-        <div>
-          <p className="text-xs font-bold text-amber-400">باقي على المنافسة</p>
-          <p className="text-[10px] text-slate-400">27 أغسطس • 8:00 ص</p>
-        </div>
-      </div>
-      <div className="flex items-center gap-1 font-mono dir-ltr" dir="ltr">
-        <div className="text-center px-1.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-white font-bold text-xs sm:text-sm min-w-[32px]">
-          {pad(timeLeft.days)} <span className="text-[9px] text-amber-300 block font-sans">يوم</span>
-        </div>
-        <span className="text-amber-400 font-bold text-xs">:</span>
-        <div className="text-center px-1.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-white font-bold text-xs sm:text-sm min-w-[32px]">
-          {pad(timeLeft.hours)} <span className="text-[9px] text-amber-300 block font-sans">ساعة</span>
-        </div>
-        <span className="text-amber-400 font-bold text-xs">:</span>
-        <div className="text-center px-1.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-white font-bold text-xs sm:text-sm min-w-[32px]">
-          {pad(timeLeft.minutes)} <span className="text-[9px] text-amber-300 block font-sans">دقيقة</span>
-        </div>
-        <span className="text-amber-400 font-bold text-xs">:</span>
-        <div className="text-center px-1.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-white font-bold text-xs sm:text-sm min-w-[32px]">
-          {pad(timeLeft.seconds)} <span className="text-[9px] text-amber-300 block font-sans">ثانية</span>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 function SuccessShareWidget() {
   const [copied, setCopied] = useState(false)
@@ -796,11 +724,6 @@ export default function Register() {
             >
               {isUpdateMode ? 'مراجعة التعديلات ←' : 'التالي ←'}
             </button>
-
-            {/* ── Compact Countdown at the Very Bottom ── */}
-            <div className="mt-6 pt-2">
-              <RegisterCompactCountdown />
-            </div>
           </div>
         </div>
       </div>
