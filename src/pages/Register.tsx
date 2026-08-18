@@ -757,11 +757,10 @@ export default function Register() {
                   <label className="block text-sm font-semibold text-slate-300 text-right mb-1">
                     اكتب أسماء الأشخاص اللي تفضّل تكون معاهم
                   </label>
-                  <div className="mt-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-right text-xs text-amber-300 space-y-1.5 leading-relaxed">
-                    <p className="font-bold text-amber-400">
-                      ⚠️ خلي بالك: <span className="font-normal text-amber-300">كتابة اسم صاحبك مش بتسجّله، هي بس بتطلب إنكم تكونوا في نفس الفريق.</span>
+                  <div className="mt-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-right text-xs text-amber-300 leading-relaxed">
+                    <p className="text-amber-300">
+                      <strong className="text-amber-400 font-bold">⚠️ خلي بالك:</strong> <strong className="text-amber-300 font-bold">كتابة اسم صاحبك مش بتسجّله.</strong> لو مسجل أو سجّل بعدك، <strong className="text-amber-300 font-bold">السيستم هيجمعكم مع بعض تلقائيًا.</strong>
                     </p>
-                    <p>لو مسجل، السيستم هيجمعكم مع بعض تلقائيًا. ولو لسه، لازم يسجل بنفسه، وبعدها السيستم هيخليكم مع بعض.</p>
                   </div>
                 </div>
                 {Array.from({ length: form.friendsCount }, (_, i) => (
