@@ -72,12 +72,12 @@ export default function Countdown({ onNavigateRegister }: CountdownProps) {
 
       <div className="relative z-10">
         {/* Header */}
-        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white mb-2 flex items-center justify-center gap-2" dir="rtl">
-          <span>🏆</span>
-          <span>العد التنازلي بدأ!</span>
-        </h2>
-        <p className="text-amber-400 font-semibold text-sm sm:text-base mb-8">
-          المنافسة هتبدأ يوم 27 أغسطس الساعة 8 صباحًا
+        <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-white mb-1 flex items-center justify-center gap-2" dir="rtl">
+          <span>⏳</span>
+          <span>العد التنازلي</span>
+        </h3>
+        <p className="text-amber-400 font-bold text-sm sm:text-base mb-6">
+          27 أغسطس — 8:00 صباحًا
         </p>
 
         {/* Dynamic Timer Cards */}
