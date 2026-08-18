@@ -62,9 +62,9 @@ export default function Register() {
       e.name = 'من فضلك أدخل اسمك'
     }
     if (!form.phone.trim()) {
-      e.phone = 'من فضلك أدخل رقم الهاتف'
+      e.phone = 'من فضلك أدخل رقم الواتساب'
     } else if (!validatePhone(form.phone)) {
-      e.phone = 'رقم الهاتف غير صحيح'
+      e.phone = 'رقم الواتساب غير صحيح'
     }
     if (!form.gender) {
       e.gender = 'من فضلك اختر النوع'
@@ -178,7 +178,7 @@ export default function Register() {
             <div className="text-5xl mb-3">📱</div>
             <h1 className="text-2xl font-black text-white mb-1">أنت مسجل بالفعل!</h1>
             <p className="text-amber-400 text-sm font-semibold">
-              تم العثور على بيانات تسجيل سابقة برقم الهاتف هذا
+              تم العثور على بيانات تسجيل سابقة برقم الواتساب هذا
             </p>
           </div>
 
@@ -203,7 +203,7 @@ export default function Register() {
                 <span className="font-bold text-white text-left" dir="ltr">
                   {normalizePhone(participant.phone)}
                 </span>
-                <span className="text-slate-400">رقم الهاتف</span>
+                <span className="text-slate-400">رقم الواتساب</span>
               </div>
               <div className="flex justify-between items-center py-2.5 border-b border-white/10">
                 <span className="font-bold text-amber-400">
@@ -385,7 +385,7 @@ export default function Register() {
                 <span className="font-bold text-white text-left" dir="ltr">
                   {normalizePhone(form.phone)}
                 </span>
-                <span className="text-slate-400 text-sm">رقم الهاتف</span>
+                <span className="text-slate-400 text-sm">رقم الواتساب</span>
               </div>
               <div className="flex justify-between items-center py-3 border-b border-white/10">
                 <span className="font-bold text-amber-400">
@@ -512,9 +512,9 @@ export default function Register() {
               {errors.name && <p className="text-red-400 text-xs mt-1 text-right">{errors.name}</p>}
             </div>
 
-            {/* ── Phone ── */}
+            {/* ── Phone / WhatsApp ── */}
             <div className="mb-4">
-              <label className="block text-sm font-semibold text-slate-300 mb-2 text-right">رقم الهاتف</label>
+              <label className="block text-sm font-semibold text-slate-300 mb-2 text-right">رقم الواتساب</label>
               <input
                 type="tel"
                 value={form.phone}
@@ -609,9 +609,14 @@ export default function Register() {
             {/* ── Friend Name Fields (dynamic) ── */}
             {form.preference === 'yes' && form.friendsCount > 0 && (
               <div className="mb-4 animate-float-up space-y-3">
-                <label className="block text-sm font-semibold text-slate-300 text-right">
-                  اكتب أسماء الأشخاص اللي تفضّل تكون معاهم
-                </label>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-300 text-right">
+                    اكتب أسماء الأشخاص اللي تفضّل تكون معاهم
+                  </label>
+                  <p className="text-amber-400/90 text-xs mt-1 text-right font-medium leading-relaxed">
+                    ⚠️ تنبيه: أسماء الأشخاص التي ستكتبها إذا لم يسجلوا بالفعل، يجب عليهم التسجيل بأنفسهم.
+                  </p>
+                </div>
                 {Array.from({ length: form.friendsCount }, (_, i) => (
                   <input
                     key={i}
@@ -632,6 +637,7 @@ export default function Register() {
                 {errors.friendNames && <p className="text-red-400 text-xs mt-1 text-right">{errors.friendNames}</p>}
               </div>
             )}
+
 
             {/* ── Submit ── */}
             <button
