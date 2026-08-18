@@ -18,7 +18,9 @@ export function normalizePhone(phone: string): string {
 }
 
 export function validatePhone(phone: string): boolean {
-  return /^01[0125]\d{8}$/.test(normalizePhone(phone))
+  const norm = normalizePhone(phone)
+  if (!norm) return false
+  return /^01[0125]\d{8}$/.test(norm)
 }
 
 // ── 2. Smart Arabic Name Normalization ───────────────────────────────────────
@@ -65,14 +67,14 @@ export function calculateNameMatchScore(queryName: string, targetName: string): 
   const qLen = qTokens.length
   const tLen = tTokens.length
 
-  // Single word query matching first token of multi-word target
+  // 1-token query
   if (qLen === 1 && tLen > 1) {
     if (qTokens[0] === tTokens[0]) return 40
     if (tTokens.includes(qTokens[0])) return 30
     return 0
   }
 
-  // Helper: Subsequence check
+  // Helper: Subsequence check (consecutive tokens)
   function isSubsequence(sub: string[], full: string[]): boolean {
     if (sub.length > full.length) return false
     for (let i = 0; i <= full.length - sub.length; i++) {
@@ -88,7 +90,6 @@ export function calculateNameMatchScore(queryName: string, targetName: string): 
     return false
   }
 
-  // Strong Multi-Token Match (consecutive words)
   if (qLen >= 2) {
     if (isSubsequence(qTokens, tTokens) || isSubsequence(tTokens, qTokens)) {
       if (Math.min(qLen, tLen) >= 2) return 90
@@ -137,7 +138,7 @@ export function findMatchedParticipant(
   const scored: { score: number; participant: Participant }[] = []
   for (const p of registeredParticipants) {
     const score = calculateNameMatchScore(friendNameQuery, p.name)
-    if (score >= 70) {
+    if (score >= 40) {
       scored.push({ score, participant: p })
     }
   }
@@ -149,6 +150,15 @@ export function findMatchedParticipant(
   scored.sort((a, b) => b.score - a.score)
   const topScore = scored[0].score
   const topCandidates = scored.filter(s => s.score === topScore).map(s => s.participant)
+
+  // 1-word match (score 40)
+  if (topScore === 40) {
+    if (topCandidates.length === 1 && registeredParticipants.length >= 1) {
+      return { matched: topCandidates[0], status: 'MATCHED', score: 40 }
+    } else {
+      return { matched: null, status: 'AMBIGUOUS', score: 40 }
+    }
+  }
 
   // 90-100: Auto Match if unambiguous
   if (topScore >= 90) {
@@ -179,187 +189,223 @@ export function findMatchedParticipant(
   return { matched: null, status: 'UNRESOLVED', score: topScore }
 }
 
-// ── 4. Dynamic Scoring & Team Formation Engine (v5.0) ────────────────────────
-export interface TeamScoreEvaluation {
-  totalScore: number
-  friendScore: number
-  genderScore: number
-  sizeScore: number
-  reasons: string[]
-  currentSize: number
-}
+// ── 4. Global Objective Function & Scoring Engine ────────────────────────────
+export function computeGlobalScore(
+  participants: Participant[],
+  originalTeams?: Record<string, string>
+): number {
+  const total = participants.length
+  if (total === 0) return 0
 
-export function evaluateTeamScores(
-  newP: { name: string; gender: Gender; wantsFriends: boolean; friendNames: string[] },
-  registered: Participant[]
-): Record<string, TeamScoreEvaluation> {
-  const teamIds = TEAMS.map(t => t.id)
-  const totalReg = registered.length + 1
-  const totalMales = registered.filter(p => p.gender === 'male').length + (newP.gender === 'male' ? 1 : 0)
-  const totalFemales = totalReg - totalMales
-  const globalTargetRatio = (newP.gender === 'male' ? totalMales : totalFemales) / totalReg
+  const totalMales = participants.filter(p => p.gender === 'male').length
+  const globalMaleRatio = totalMales / total
 
   const teamSizes: Record<string, number> = { red: 0, green: 0, yellow: 0, black: 0 }
   const teamMales: Record<string, number> = { red: 0, green: 0, yellow: 0, black: 0 }
-  const teamFemales: Record<string, number> = { red: 0, green: 0, yellow: 0, black: 0 }
 
-  for (const p of registered) {
+  for (const p of participants) {
     if (p.team in teamSizes) {
       teamSizes[p.team]++
       if (p.gender === 'male') teamMales[p.team]++
-      else teamFemales[p.gender]++
     }
   }
 
-  const sizesArray = Object.values(teamSizes)
-  const minSize = Math.min(...sizesArray)
-  const maxSize = Math.max(...sizesArray)
+  const sizes = Object.values(teamSizes)
+  const minSize = Math.min(...sizes)
 
-  // 1. Forward Friends Check
-  const forwardFriends: { participant: Participant; rawQuery: string }[] = []
-  if (newP.wantsFriends && newP.friendNames && newP.friendNames.length > 0) {
-    for (const fn of newP.friendNames) {
-      const matchRes = findMatchedParticipant(fn, registered)
-      if (matchRes.status === 'MATCHED' && matchRes.matched) {
-        forwardFriends.push({ participant: matchRes.matched, rawQuery: fn })
+  let score = 0
+
+  // 1. Friend Requests Satisfaction Score
+  const pById = new Map<string, Participant>()
+  for (const p of participants) pById.set(p.id, p)
+
+  const evaluatedMutualPairs = new Set<string>()
+
+  for (const p of participants) {
+    if (!p.wantsFriends || !p.friendNames || p.friendNames.length === 0) continue
+
+    for (const fn of p.friendNames) {
+      const { matched, status } = findMatchedParticipant(
+        fn,
+        participants.filter(other => other.id !== p.id)
+      )
+
+      if (status === 'MATCHED' && matched) {
+        const isMutual =
+          matched.wantsFriends &&
+          matched.friendNames &&
+          matched.friendNames.some(
+            tFn => calculateNameMatchScore(tFn, p.name) >= 70
+          )
+
+        const pairKey = [p.id, matched.id].sort().join(':')
+
+        if (isMutual) {
+          if (!evaluatedMutualPairs.has(pairKey)) {
+            evaluatedMutualPairs.add(pairKey)
+            if (p.team === matched.team) {
+              score += 100 // Mutual Friend Request Satisfied
+            }
+          }
+        } else {
+          if (p.team === matched.team) {
+            score += 60 // One-way Friend Request Satisfied
+          }
+        }
       }
     }
   }
 
-  // 2. Reverse Friends Check (people who requested newP in previous registrations)
-  const reverseFriends: { participant: Participant; rawQuery: string }[] = []
-  for (const p of registered) {
-    if (p.wantsFriends && p.friendNames && p.friendNames.length > 0) {
+  // 2. Gender Balance Score per team
+  for (const teamId of TEAMS.map(t => t.id)) {
+    const s = teamSizes[teamId]
+    if (s > 0) {
+      const mRatio = teamMales[teamId] / s
+      const delta = Math.abs(mRatio - globalMaleRatio)
+      if (delta <= 0.10) score += 30
+      else if (delta <= 0.22) score -= 20
+      else score -= 50
+    }
+  }
+
+  // 3. Team Size Balance Score per team
+  for (const teamId of TEAMS.map(t => t.id)) {
+    const s = teamSizes[teamId]
+    if (s === minSize) score += 30
+    else if (s === minSize + 1) score += 0
+    else score -= 40
+  }
+
+  // 4. Minimum Change Principle (movement penalty for previously assigned participants)
+  if (originalTeams) {
+    for (const p of participants) {
+      if (p.id in originalTeams && p.team !== originalTeams[p.id]) {
+        score -= 15 // Small penalty for shifting an existing member
+      }
+    }
+  }
+
+  return score
+}
+
+// ── 5. Global Team Optimizer with Dynamic Rebalancing ────────────────────────
+export function optimizeGlobalAssignments(
+  newP: Participant,
+  existingList: Participant[]
+): { assignedTeam: string; updatedRegistrations: Participant[] } {
+  const originalTeams: Record<string, string> = {}
+  for (const p of existingList) originalTeams[p.id] = p.team
+
+  const allParticipants = existingList.map(p => ({ ...p })).concat({ ...newP })
+  const teamIds = TEAMS.map(t => t.id)
+
+  let bestScore = -Infinity
+  let bestConfig: Record<string, string> = {}
+
+  // Option 1: Direct assignment of newP to each team
+  for (const t of teamIds) {
+    for (const p of allParticipants) {
+      p.team = originalTeams[p.id] ?? t
+    }
+
+    const sc = computeGlobalScore(allParticipants, originalTeams)
+    if (sc > bestScore) {
+      bestScore = sc
+      bestConfig = {}
+      for (const p of allParticipants) bestConfig[p.id] = p.team
+    }
+  }
+
+  // Option 2: Dynamic Rebalancing with Friends
+  // Find connected friends (forward or reverse)
+  const connectedFriendIds: string[] = []
+
+  if (newP.wantsFriends && newP.friendNames) {
+    for (const fn of newP.friendNames) {
+      const match = findMatchedParticipant(fn, existingList)
+      if (match.status === 'MATCHED' && match.matched) {
+        connectedFriendIds.push(match.matched.id)
+      }
+    }
+  }
+
+  for (const p of existingList) {
+    if (p.wantsFriends && p.friendNames) {
       for (const fn of p.friendNames) {
         if (calculateNameMatchScore(fn, newP.name) >= 70) {
-          reverseFriends.push({ participant: p, rawQuery: fn })
+          if (!connectedFriendIds.includes(p.id)) {
+            connectedFriendIds.push(p.id)
+          }
           break
         }
       }
     }
   }
 
-  const evaluations: Record<string, TeamScoreEvaluation> = {}
+  for (const fId of connectedFriendIds) {
+    const targetTeam = originalTeams[fId]
+    if (!targetTeam) continue
 
-  for (const team of teamIds) {
-    let friendScore = 0
-    const reasons: string[] = []
+    // A: Try placing newP with friend
+    for (const p of allParticipants) p.team = originalTeams[p.id] ?? targetTeam
+    const pNew = allParticipants.find(p => p.id === newP.id)
+    if (pNew) pNew.team = targetTeam
 
-    // Evaluate forward friend matches
-    for (const { participant: targetP } of forwardFriends) {
-      if (targetP.team === team) {
-        // Check if mutual
-        let isMutual = false
-        if (targetP.wantsFriends && targetP.friendNames) {
-          for (const tFn of targetP.friendNames) {
-            if (calculateNameMatchScore(tFn, newP.name) >= 70) {
-              isMutual = true
-              break
-            }
-          }
-        }
+    const scDirect = computeGlobalScore(allParticipants, originalTeams)
+    if (scDirect > bestScore) {
+      bestScore = scDirect
+      bestConfig = {}
+      for (const p of allParticipants) bestConfig[p.id] = p.team
+    }
 
-        if (isMutual) {
-          friendScore += 100
-          reasons.push(`طلب متبادل مع ${targetP.name} (+100)`)
-        } else {
-          friendScore += 60
-          reasons.push(`طلب صديق مسجل: ${targetP.name} (+60)`)
-        }
+    // B: Try shifting friend and newP to another team + swap independent member
+    for (const otherT of teamIds) {
+      if (otherT === targetTeam) continue
+
+      for (const p of allParticipants) p.team = originalTeams[p.id] ?? otherT
+      const friendP = allParticipants.find(p => p.id === fId)
+      if (friendP) friendP.team = otherT
+      if (pNew) pNew.team = otherT
+
+      // Swap independent member to preserve size
+      const independentSwap = allParticipants.find(
+        p =>
+          p.id !== newP.id &&
+          p.id !== fId &&
+          !p.wantsFriends &&
+          originalTeams[p.id] === otherT &&
+          p.gender === (friendP ? friendP.gender : 'male')
+      )
+      if (independentSwap) {
+        independentSwap.team = targetTeam
+      }
+
+      const scSwap = computeGlobalScore(allParticipants, originalTeams)
+      if (scSwap > bestScore) {
+        bestScore = scSwap
+        bestConfig = {}
+        for (const p of allParticipants) bestConfig[p.id] = p.team
       }
     }
+  }
 
-    // Evaluate reverse friend matches
-    for (const { participant: requesterP } of reverseFriends) {
-      if (requesterP.team === team) {
-        const alreadyCounted = forwardFriends.some(f => f.participant.id === requesterP.id)
-        if (!alreadyCounted) {
-          friendScore += 60
-          reasons.push(`${requesterP.name} كان طالبك مسبقاً (+60)`)
-        }
-      }
-    }
-
-    // Evaluate Gender Balance
-    const currentGCount = newP.gender === 'male' ? teamMales[team] : teamFemales[team]
-    const currentOppCount = newP.gender === 'male' ? teamFemales[team] : teamMales[team]
-    const newTeamSize = teamSizes[team] + 1
-    const newGRatio = (currentGCount + 1) / newTeamSize
-    const delta = newGRatio - globalTargetRatio
-
-    let genderScore = 0
-    if (currentGCount < currentOppCount) {
-      genderScore = 30
-      reasons.push('توازن جنس ممتاز (+30)')
-    } else if (Math.abs(delta) <= 0.12) {
-      genderScore = 15
-      reasons.push('توازن جنس مقبول (+15)')
-    } else if (delta > 0.25) {
-      genderScore = -50
-      reasons.push('خلل جنس كبير (-50)')
-    } else {
-      genderScore = -20
-      reasons.push('خلل جنس متوسط (-20)')
-    }
-
-    // Evaluate Team Size Balance
-    let sizeScore = 0
-    const currSize = teamSizes[team]
-    if (currSize === minSize) {
-      sizeScore = 30
-      reasons.push('أصغر فريق متاح (+30)')
-    } else if (currSize === minSize + 1) {
-      sizeScore = 10
-      reasons.push('حجم متقارب (+10)')
-    } else if (currSize >= minSize + 3 || (maxSize - minSize >= 3 && currSize === maxSize)) {
-      sizeScore = -40
-      reasons.push('فريق كبير (-40)')
-    } else {
-      sizeScore = 0
-    }
-
-    const totalScore = friendScore + genderScore + sizeScore
-
-    evaluations[team] = {
-      totalScore,
-      friendScore,
-      genderScore,
-      sizeScore,
-      reasons,
-      currentSize: currSize
+  // Apply best configuration
+  for (const p of allParticipants) {
+    if (p.id in bestConfig) {
+      p.team = bestConfig[p.id]
     }
   }
 
-  return evaluations
+  const assignedTeam = bestConfig[newP.id] || teamIds[0]
+  const updatedRegistrations = allParticipants.filter(p => p.id !== newP.id)
+
+  return {
+    assignedTeam,
+    updatedRegistrations
+  }
 }
 
-export function chooseBestTeam(
-  evaluations: Record<string, TeamScoreEvaluation>,
-  newP: { gender: Gender },
-  genderCounts: Record<string, number>
-): string {
-  const teamIds = TEAMS.map(t => t.id)
-  const maxScore = Math.max(...teamIds.map(t => evaluations[t].totalScore))
-  const bestTeams = teamIds.filter(t => evaluations[t].totalScore === maxScore)
-
-  if (bestTeams.length === 1) {
-    return bestTeams[0]
-  }
-
-  // Tie-breaker 1: Choose smaller team
-  const minSize = Math.min(...bestTeams.map(t => evaluations[t].currentSize))
-  const tiedSmallest = bestTeams.filter(t => evaluations[t].currentSize === minSize)
-
-  if (tiedSmallest.length === 1) {
-    return tiedSmallest[0]
-  }
-
-  // Tie-breaker 2: Deterministic round-robin on gender count
-  const rrIndex = (genderCounts[newP.gender] || 0) % tiedSmallest.length
-  return tiedSmallest[rrIndex]
-}
-
-// ── 5. Local Storage Handlers ────────────────────────────────────────────────
+// ── 6. Local Storage Handlers ────────────────────────────────────────────────
 export function getRegistrations(): Participant[] {
   try {
     const data = localStorage.getItem(LOCAL_STORAGE_KEY)
@@ -378,7 +424,7 @@ function saveRegistrations(registrations: Participant[]) {
   }
 }
 
-// ── 6. Full Registration Service ─────────────────────────────────────────────
+// ── 7. Full Registration Service ─────────────────────────────────────────────
 export async function registerParticipant(data: {
   name: string
   phone: string
@@ -388,13 +434,23 @@ export async function registerParticipant(data: {
   friendNames: string[]
   isUpdate?: boolean
 }): Promise<{ status: 'success' | 'error'; participant: Participant; isExisting?: boolean; error?: string }> {
+  // Validate Phone strictly
+  const normalizedPhoneNum = normalizePhone(data.phone)
+  if (!normalizedPhoneNum || !validatePhone(normalizedPhoneNum)) {
+    return {
+      status: 'error',
+      participant: null as unknown as Participant,
+      error: 'من فضلك أدخل رقم واتساب صحيح يبدأ بـ 01'
+    }
+  }
+
   if (SCRIPT_URL && SCRIPT_URL.trim() !== '') {
     try {
       const payload = {
         action: data.isUpdate ? 'update' : 'register',
         isUpdate: data.isUpdate === true,
         name: data.name,
-        phone: data.phone,
+        phone: normalizedPhoneNum,
         gender: data.gender,
         wantsFriends: data.wantsFriends,
         friendsCount: data.wantsFriends ? data.friendsCount : 0,
@@ -441,11 +497,13 @@ export async function registerParticipant(data: {
   // ── Mock Fallback (when VITE_GOOGLE_SCRIPT_URL is not set) ──────────────────
   await new Promise(resolve => setTimeout(resolve, 600))
 
-  const normalizedPhoneNum = normalizePhone(data.phone)
   const registrations = getRegistrations()
 
   // 1. Duplicate Prevention & Update Logic
-  const existingIndex = registrations.findIndex(p => normalizePhone(p.phone) === normalizedPhoneNum)
+  const existingIndex = registrations.findIndex(
+    p => normalizePhone(p.phone) === normalizedPhoneNum
+  )
+
   if (existingIndex !== -1) {
     if (data.isUpdate) {
       const existing = registrations[existingIndex]
@@ -460,25 +518,8 @@ export async function registerParticipant(data: {
     return { status: 'success', participant: registrations[existingIndex], isExisting: true }
   }
 
-  // 2. Gender counts for tie-breaking
-  const genderCounts: Record<string, number> = { male: 0, female: 0 }
-  registrations.forEach(p => {
-    if (p.gender in genderCounts) genderCounts[p.gender]++
-  })
-
-  // 3. Algorithm v5.0 Evaluation
-  const newParticipantDraft = {
-    name: data.name.trim(),
-    gender: data.gender,
-    wantsFriends: data.wantsFriends,
-    friendNames: data.wantsFriends ? data.friendNames.map(n => n.trim()) : []
-  }
-
-  const evals = evaluateTeamScores(newParticipantDraft, registrations)
-  const assignedTeamId = chooseBestTeam(evals, newParticipantDraft, genderCounts)
-
-  // 4. Save and return
-  const newParticipant: Participant = {
+  // 2. Global Team Optimization with Dynamic Rebalancing
+  const newParticipantDraft: Participant = {
     id: `p_${Math.random().toString(36).substring(2, 9)}`,
     name: data.name.trim(),
     phone: normalizedPhoneNum,
@@ -486,20 +527,26 @@ export async function registerParticipant(data: {
     wantsFriends: data.wantsFriends,
     friendsCount: data.wantsFriends ? data.friendsCount : 0,
     friendNames: data.wantsFriends ? data.friendNames.map(n => n.trim()) : [],
-    team: assignedTeamId,
+    team: 'red',
     registrationTime: new Date().toISOString()
   }
 
-  registrations.push(newParticipant)
-  saveRegistrations(registrations)
+  const { assignedTeam, updatedRegistrations } = optimizeGlobalAssignments(
+    newParticipantDraft,
+    registrations
+  )
+
+  newParticipantDraft.team = assignedTeam
+  updatedRegistrations.push(newParticipantDraft)
+  saveRegistrations(updatedRegistrations)
 
   return {
     status: 'success',
-    participant: newParticipant
+    participant: newParticipantDraft
   }
 }
 
-// ── 7. Audit & Validation Helper ─────────────────────────────────────────────
+// ── 8. Audit & Validation Helper ─────────────────────────────────────────────
 export interface AuditReport {
   totalParticipants: number
   totalMales: number
@@ -561,7 +608,10 @@ export function auditRegistrations(registrations: Participant[]): AuditReport {
     if (p.wantsFriends && p.friendNames) {
       for (const fn of p.friendNames) {
         totalFriendRequests++
-        const { matched, status } = findMatchedParticipant(fn, registrations)
+        const { matched, status } = findMatchedParticipant(
+          fn,
+          registrations.filter(other => other.id !== p.id)
+        )
         if (status === 'MATCHED' && matched) {
           if (matched.team === p.team) {
             satisfiedRequests++

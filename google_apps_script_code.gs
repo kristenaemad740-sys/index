@@ -1,25 +1,30 @@
 /**
  * ==============================================================================
- *  🏆 اليوم الرياضي لأسرة الكاروز — Google Apps Script (Algorithm v5.0)
+ *  🏆 اليوم الرياضي لأسرة الكاروز — Google Apps Script (Global Optimizer v5.1)
  * ==============================================================================
- *  يحتوي على المحرك الكامل لتكوين الفرق الذكي وتوزيع الجنس وطلبات الأصدقاء.
- *  
+ *  يحتوي على المحرك الكامل لتكوين الفرق الذكي وإعادة التوازن الديناميكي:
+ *  - Global Team Optimization مع Minimum Change Principle
+ *  - Dynamic Rebalancing عند تسجيل الصديق لاحقاً
+ *  - Smart Arabic Normalization & Confidence Scored Name Matching
+ *  - Dynamic Gender Balance & Team Size Balancing
+ *  - حماية كاملة من الأرقام الفارغة والمكررة
+ *
  *  كيفية التركيب:
  *  1. افتح ملف Google Sheets الخاص باليوم الرياضي.
  *  2. اضغط على Extensions → Apps Script.
  *  3. امسح الكود القديم والصق هذا الكود بالكامل.
- *  4. اضغط Deploy → New Deployment → Web app → Anyone → Deploy.
+ *  4. اضغط Deploy → Manage Deployments → Edit (القلم) → New Version → Deploy.
  * ==============================================================================
  */
 
 const TEAMS = ['red', 'green', 'yellow', 'black'];
-const SHEET_NAME = 'Sheet1'; // اسم صفحة البيانات
+const SHEET_NAME = 'Sheet1';
 
 // ── 1. معالجة طلبات POST و GET ────────────────────────────────────────────────
 function doPost(e) {
   try {
     const lock = LockService.getScriptLock();
-    lock.waitLock(30000); // قفل لتفادي الـ Race Conditions والتسجيل المتزامن
+    lock.waitLock(30000); // منع التضارب والتسجيل المتزامن
 
     try {
       const data = JSON.parse(e.postData.contents);
@@ -49,7 +54,7 @@ function doGet(e) {
   const registrations = getSheetRegistrations();
   return createJsonResponse({
     status: 'online',
-    service: 'Al-Karoz Sports Day API v5.0',
+    service: 'Al-Karoz Sports Day API (Global Optimizer v5.1)',
     totalRegistrations: registrations.length,
     timestamp: new Date().toISOString()
   });
@@ -154,7 +159,7 @@ function findMatchedParticipant(friendNameQuery, registered) {
   for (let i = 0; i < registered.length; i++) {
     const p = registered[i];
     const score = calculateNameMatchScore(friendNameQuery, p.name);
-    if (score >= 70) {
+    if (score >= 40) {
       scored.push({ score: score, participant: p });
     }
   }
@@ -166,6 +171,14 @@ function findMatchedParticipant(friendNameQuery, registered) {
   scored.sort(function(a, b) { return b.score - a.score; });
   const topScore = scored[0].score;
   const topCandidates = scored.filter(function(s) { return s.score === topScore; }).map(function(s) { return s.participant; });
+
+  if (topScore === 40) {
+    if (topCandidates.length === 1 && registered.length >= 1) {
+      return { matched: topCandidates[0], status: 'MATCHED', score: 40 };
+    } else {
+      return { matched: null, status: 'AMBIGUOUS', score: 40 };
+    }
+  }
 
   if (topScore >= 90) {
     if (topCandidates.length === 1) {
@@ -191,152 +204,183 @@ function findMatchedParticipant(friendNameQuery, registered) {
   return { matched: null, status: 'UNRESOLVED', score: topScore };
 }
 
-// ── 4. محرك تقييم واختيار الفريق (Algorithm v5.0) ────────────────────────────
-function evaluateAndAssignTeam(newP, registered) {
-  const totalReg = registered.length + 1;
+// ── 4. حساب الـ Global Score لتقييم التوزيع الكلي ───────────────────────────
+function computeGlobalScore(participants, originalTeams) {
+  const total = participants.length;
+  if (total === 0) return 0;
+
   let totalMales = 0;
-  for (let i = 0; i < registered.length; i++) {
-    if (registered[i].gender === 'male') totalMales++;
+  for (let i = 0; i < total; i++) {
+    if (participants[i].gender === 'male') totalMales++;
   }
-  if (newP.gender === 'male') totalMales++;
-  const totalFemales = totalReg - totalMales;
-  const globalTargetRatio = (newP.gender === 'male' ? totalMales : totalFemales) / totalReg;
+  const globalMaleRatio = totalMales / total;
 
   const teamSizes = { red: 0, green: 0, yellow: 0, black: 0 };
   const teamMales = { red: 0, green: 0, yellow: 0, black: 0 };
-  const teamFemales = { red: 0, green: 0, yellow: 0, black: 0 };
 
-  for (let i = 0; i < registered.length; i++) {
-    const p = registered[i];
-    const t = p.team;
+  for (let i = 0; i < total; i++) {
+    const t = participants[i].team;
     if (t in teamSizes) {
       teamSizes[t]++;
-      if (p.gender === 'male') teamMales[t]++;
-      else teamFemales[t]++;
+      if (participants[i].gender === 'male') teamMales[t]++;
     }
   }
 
   const sizesArr = [teamSizes.red, teamSizes.green, teamSizes.yellow, teamSizes.black];
   const minSize = Math.min.apply(null, sizesArr);
-  const maxSize = Math.max.apply(null, sizesArr);
 
-  // 1. فحص طلبات الأصدقاء الصادرة (Forward)
-  const forwardFriends = [];
-  if (newP.wantsFriends && newP.friendNames && newP.friendNames.length > 0) {
-    for (let i = 0; i < newP.friendNames.length; i++) {
-      const matchRes = findMatchedParticipant(newP.friendNames[i], registered);
+  let score = 0;
+  const evaluatedPairs = {};
+
+  for (let i = 0; i < total; i++) {
+    const p = participants[i];
+    if (!p.wantsFriends || !p.friendNames || p.friendNames.length === 0) continue;
+
+    const others = participants.filter(function(o) { return o.id !== p.id; });
+    for (let j = 0; j < p.friendNames.length; j++) {
+      const matchRes = findMatchedParticipant(p.friendNames[j], others);
       if (matchRes.status === 'MATCHED' && matchRes.matched) {
-        forwardFriends.push(matchRes.matched);
+        const target = matchRes.matched;
+        let isMutual = false;
+        if (target.wantsFriends && target.friendNames) {
+          for (let k = 0; k < target.friendNames.length; k++) {
+            if (calculateNameMatchScore(target.friendNames[k], p.name) >= 70) {
+              isMutual = true;
+              break;
+            }
+          }
+        }
+
+        const pairKey = [p.id, target.id].sort().join(':');
+        if (isMutual) {
+          if (!evaluatedPairs[pairKey]) {
+            evaluatedPairs[pairKey] = true;
+            if (p.team === target.team) score += 100;
+          }
+        } else {
+          if (p.team === target.team) score += 60;
+        }
       }
     }
   }
 
-  // 2. فحص طلبات الأصدقاء الواردة مسبقاً (Reverse)
-  const reverseFriends = [];
-  for (let i = 0; i < registered.length; i++) {
-    const p = registered[i];
-    if (p.wantsFriends && p.friendNames && p.friendNames.length > 0) {
+  // Gender Balance Score
+  for (let i = 0; i < TEAMS.length; i++) {
+    const t = TEAMS[i];
+    const s = teamSizes[t];
+    if (s > 0) {
+      const mRatio = teamMales[t] / s;
+      const delta = Math.abs(mRatio - globalMaleRatio);
+      if (delta <= 0.10) score += 30;
+      else if (delta <= 0.22) score -= 20;
+      else score -= 50;
+    }
+  }
+
+  // Team Size Balance Score
+  for (let i = 0; i < TEAMS.length; i++) {
+    const t = TEAMS[i];
+    const s = teamSizes[t];
+    if (s === minSize) score += 30;
+    else if (s === minSize + 1) score += 0;
+    else score -= 40;
+  }
+
+  // Minimum Change Penalty
+  if (originalTeams) {
+    for (let i = 0; i < total; i++) {
+      const p = participants[i];
+      if (originalTeams[p.id] && p.team !== originalTeams[p.id]) {
+        score -= 15;
+      }
+    }
+  }
+
+  return score;
+}
+
+// ── 5. محرك الـ Global Team Optimizer وإعادة التوازن ────────────────────────
+function optimizeGlobalAssignments(newP, existingList) {
+  const originalTeams = {};
+  for (let i = 0; i < existingList.length; i++) {
+    originalTeams[existingList[i].id] = existingList[i].team;
+  }
+
+  const allParticipants = existingList.map(function(p) { return Object.assign({}, p); });
+  allParticipants.push(Object.assign({}, newP));
+
+  let bestScore = -9999999;
+  let bestConfig = {};
+
+  // خيار 1: التعيين المباشر في الفرق الأربعة
+  for (let idx = 0; idx < TEAMS.length; idx++) {
+    const t = TEAMS[idx];
+    for (let i = 0; i < allParticipants.length; i++) {
+      allParticipants[i].team = originalTeams[allParticipants[i].id] || t;
+    }
+    const sc = computeGlobalScore(allParticipants, originalTeams);
+    if (sc > bestScore) {
+      bestScore = sc;
+      bestConfig = {};
+      for (let i = 0; i < allParticipants.length; i++) {
+        bestConfig[allParticipants[i].id] = allParticipants[i].team;
+      }
+    }
+  }
+
+  // خيار 2: إعادة التوازن الديناميكي للأصدقاء المتصلين
+  const connectedFriendIds = [];
+  if (newP.wantsFriends && newP.friendNames) {
+    for (let i = 0; i < newP.friendNames.length; i++) {
+      const m = findMatchedParticipant(newP.friendNames[i], existingList);
+      if (m.status === 'MATCHED' && m.matched) connectedFriendIds.push(m.matched.id);
+    }
+  }
+  for (let i = 0; i < existingList.length; i++) {
+    const p = existingList[i];
+    if (p.wantsFriends && p.friendNames) {
       for (let j = 0; j < p.friendNames.length; j++) {
         if (calculateNameMatchScore(p.friendNames[j], newP.name) >= 70) {
-          reverseFriends.push(p);
+          if (connectedFriendIds.indexOf(p.id) === -1) connectedFriendIds.push(p.id);
           break;
         }
       }
     }
   }
 
-  const teamScores = {};
+  for (let fIdx = 0; fIdx < connectedFriendIds.length; fIdx++) {
+    const fId = connectedFriendIds[fIdx];
+    const targetTeam = originalTeams[fId];
+    if (!targetTeam) continue;
 
-  for (let idx = 0; idx < TEAMS.length; idx++) {
-    const team = TEAMS[idx];
-    let friendScore = 0;
+    for (let i = 0; i < allParticipants.length; i++) {
+      allParticipants[i].team = originalTeams[allParticipants[i].id] || targetTeam;
+      if (allParticipants[i].id === newP.id) allParticipants[i].team = targetTeam;
+    }
 
-    // Forward checks
-    for (let f = 0; f < forwardFriends.length; f++) {
-      const targetP = forwardFriends[f];
-      if (targetP.team === team) {
-        let isMutual = false;
-        if (targetP.wantsFriends && targetP.friendNames) {
-          for (let k = 0; k < targetP.friendNames.length; k++) {
-            if (calculateNameMatchScore(targetP.friendNames[k], newP.name) >= 70) {
-              isMutual = true;
-              break;
-            }
-          }
-        }
-        friendScore += (isMutual ? 100 : 60);
+    const scDirect = computeGlobalScore(allParticipants, originalTeams);
+    if (scDirect > bestScore) {
+      bestScore = scDirect;
+      bestConfig = {};
+      for (let i = 0; i < allParticipants.length; i++) {
+        bestConfig[allParticipants[i].id] = allParticipants[i].team;
       }
     }
-
-    // Reverse checks
-    for (let r = 0; r < reverseFriends.length; r++) {
-      const reqP = reverseFriends[r];
-      if (reqP.team === team) {
-        let alreadyCounted = false;
-        for (let f = 0; f < forwardFriends.length; f++) {
-          if (forwardFriends[f].id === reqP.id) { alreadyCounted = true; break; }
-        }
-        if (!alreadyCounted) {
-          friendScore += 60;
-        }
-      }
-    }
-
-    // Gender Balance
-    const currentGCount = newP.gender === 'male' ? teamMales[team] : teamFemales[team];
-    const currentOppCount = newP.gender === 'male' ? teamFemales[team] : teamMales[team];
-    const newTeamSize = teamSizes[team] + 1;
-    const newGRatio = (currentGCount + 1) / newTeamSize;
-    const delta = newGRatio - globalTargetRatio;
-
-    let genderScore = 0;
-    if (currentGCount < currentOppCount) {
-      genderScore = 30;
-    } else if (Math.abs(delta) <= 0.12) {
-      genderScore = 15;
-    } else if (delta > 0.25) {
-      genderScore = -50;
-    } else {
-      genderScore = -20;
-    }
-
-    // Team Size Balance
-    let sizeScore = 0;
-    const currSize = teamSizes[team];
-    if (currSize === minSize) {
-      sizeScore = 30;
-    } else if (currSize === minSize + 1) {
-      sizeScore = 10;
-    } else if (currSize >= minSize + 3 || (maxSize - minSize >= 3 && currSize === maxSize)) {
-      sizeScore = -40;
-    }
-
-    teamScores[team] = friendScore + genderScore + sizeScore;
   }
 
-  // اختيار الفريق صاحب أعلى Score
-  let maxScore = -999999;
-  for (let idx = 0; idx < TEAMS.length; idx++) {
-    if (teamScores[TEAMS[idx]] > maxScore) maxScore = teamScores[TEAMS[idx]];
+  for (let i = 0; i < allParticipants.length; i++) {
+    if (bestConfig[allParticipants[i].id]) {
+      allParticipants[i].team = bestConfig[allParticipants[i].id];
+    }
   }
 
-  const bestTeams = TEAMS.filter(function(t) { return teamScores[t] === maxScore; });
-  if (bestTeams.length === 1) return bestTeams[0];
+  const assignedTeam = bestConfig[newP.id] || TEAMS[0];
+  const updatedRegistrations = allParticipants.filter(function(p) { return p.id !== newP.id; });
 
-  // كسر التعادل: الفريق الأصغر
-  let smallestSize = 999999;
-  for (let idx = 0; idx < bestTeams.length; idx++) {
-    if (teamSizes[bestTeams[idx]] < smallestSize) smallestSize = teamSizes[bestTeams[idx]];
-  }
-  const tiedSmallest = bestTeams.filter(function(t) { return teamSizes[t] === smallestSize; });
-  if (tiedSmallest.length === 1) return tiedSmallest[0];
-
-  // كسر التعادل النهائي: Round-Robin حتمي
-  const gCount = newP.gender === 'male' ? totalMales : totalFemales;
-  return tiedSmallest[gCount % tiedSmallest.length];
+  return { assignedTeam: assignedTeam, updatedRegistrations: updatedRegistrations };
 }
 
-// ── 5. قراءة وكتابة البيانات في Google Sheets ─────────────────────────────────
+// ── 6. قراءة وكتابة البيانات في Google Sheets ─────────────────────────────────
 function getSheetRegistrations() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME) || SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
   const data = sheet.getDataRange().getValues();
@@ -345,7 +389,7 @@ function getSheetRegistrations() {
   const participants = [];
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
-    if (!row[1] || String(row[1]).trim() === '') continue; // تخطي الصفوف الفارغة
+    if (!row[1] || String(row[1]).trim() === '') continue;
 
     let friends = [];
     if (row[6]) {
@@ -381,6 +425,10 @@ function processRegistration(data) {
   const registrations = getSheetRegistrations();
   const normPhone = normalizePhone(data.phone);
 
+  if (!normPhone || !/^01[0125]\d{8}$/.test(normPhone)) {
+    return { success: false, error: 'من فضلك أدخل رقم واتساب مصري صحيح' };
+  }
+
   // 1. فحص التكرار برقم الهاتف
   let existingIndex = -1;
   for (let i = 0; i < registrations.length; i++) {
@@ -393,7 +441,6 @@ function processRegistration(data) {
   if (existingIndex !== -1) {
     const existing = registrations[existingIndex];
     if (data.isUpdate) {
-      // تحديث البيانات دون كسر الفريق الحالي
       existing.name = String(data.name || '').trim();
       existing.gender = data.gender;
       existing.wantsFriends = data.wantsFriends === true;
@@ -411,17 +458,34 @@ function processRegistration(data) {
     return { success: true, data: existing, existing: true };
   }
 
-  // 2. تسجيل مشترك جديد وحساب الفريق
-  const newParticipantDraft = {
-    name: String(data.name || '').trim(),
-    gender: data.gender || 'male',
-    wantsFriends: data.wantsFriends === true,
-    friendNames: data.wantsFriends ? (data.friendNames || []) : []
-  };
-
-  const assignedTeam = evaluateAndAssignTeam(newParticipantDraft, registrations);
+  // 2. تسجيل مشترك جديد مع Global Optimization
   const participantId = 'p_' + new Date().getTime().toString(36) + '_' + Math.random().toString(36).substr(2, 5);
   const nowIso = new Date().toISOString();
+
+  const newParticipantDraft = {
+    id: participantId,
+    name: String(data.name || '').trim(),
+    phone: normPhone,
+    gender: data.gender || 'male',
+    wantsFriends: data.wantsFriends === true,
+    friendsCount: data.wantsFriends ? (data.friendsCount || 0) : 0,
+    friendNames: data.wantsFriends ? (data.friendNames || []) : [],
+    team: 'red',
+    registrationTime: nowIso
+  };
+
+  const optimizationRes = optimizeGlobalAssignments(newParticipantDraft, registrations);
+  const assignedTeam = optimizationRes.assignedTeam;
+  const updatedRegistrations = optimizationRes.updatedRegistrations;
+
+  // تحديث أي أعضاء تم تعديل فريقهم نتيجة لإعادة التوازن (Rebalancing)
+  for (let i = 0; i < updatedRegistrations.length; i++) {
+    const reg = updatedRegistrations[i];
+    const oldReg = registrations.find(function(r) { return r.id === reg.id; });
+    if (oldReg && oldReg.team !== reg.team && reg.rowIndex) {
+      sheet.getRange(reg.rowIndex, 8).setValue(reg.team);
+    }
+  }
 
   const newRow = [
     participantId,
@@ -437,22 +501,11 @@ function processRegistration(data) {
 
   sheet.appendRow(newRow);
 
-  const finalParticipant = {
-    id: participantId,
-    name: newParticipantDraft.name,
-    phone: normPhone,
-    gender: newParticipantDraft.gender,
-    wantsFriends: newParticipantDraft.wantsFriends,
-    friendsCount: newParticipantDraft.wantsFriends ? (data.friendsCount || 0) : 0,
-    friendNames: newParticipantDraft.friendNames,
-    team: assignedTeam,
-    registrationTime: nowIso
-  };
-
-  return { success: true, data: finalParticipant, existing: false };
+  newParticipantDraft.team = assignedTeam;
+  return { success: true, data: newParticipantDraft, existing: false };
 }
 
-// ── 6. تدقيق شامل للـ Admin ──────────────────────────────────────────────────
+// ── 7. تدقيق شامل للنظام ─────────────────────────────────────────────────────
 function auditRegistrations(registrations) {
   const total = registrations.length;
   let totalMales = 0;
@@ -479,9 +532,10 @@ function auditRegistrations(registrations) {
   for (let i = 0; i < total; i++) {
     const p = registrations[i];
     if (p.wantsFriends && p.friendNames) {
+      const others = registrations.filter(function(o) { return o.id !== p.id; });
       for (let j = 0; j < p.friendNames.length; j++) {
         totalRequests++;
-        const matchRes = findMatchedParticipant(p.friendNames[j], registrations);
+        const matchRes = findMatchedParticipant(p.friendNames[j], others);
         if (matchRes.status === 'MATCHED' && matchRes.matched) {
           if (matchRes.matched.team === p.team) satisfied++;
         }
@@ -495,6 +549,10 @@ function auditRegistrations(registrations) {
     females: total - totalMales,
     teamCounts: teamCounts,
     teamGenders: teamGenders,
-    friendRequests: { total: totalRequests, satisfied: satisfied, rate: totalRequests > 0 ? (satisfied / totalRequests * 100).toFixed(1) + '%' : '100%' }
+    friendRequests: {
+      total: totalRequests,
+      satisfied: satisfied,
+      rate: totalRequests > 0 ? (satisfied / totalRequests * 100).toFixed(1) + '%' : '100%'
+    }
   };
 }
