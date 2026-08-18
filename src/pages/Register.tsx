@@ -80,10 +80,10 @@ function RegisterCompactCountdown() {
   )
 }
 
-function RegisterCompactShare() {
+function SuccessShareWidget() {
   const [copied, setCopied] = useState(false)
   const shareUrl = 'https://karoz-sports.vercel.app/'
-  const msg = `🏆🔥 اليوم الرياضي لأسرة الكاروز بدأ!\nسجّل من دلوقتي وابدأ كوّن فريقك:\n${shareUrl}`
+  const msg = `🏆🔥 اليوم الرياضي لأسرة الكاروز بدأ!\nأنا سجلت، وإنت كمان سجّل وابدأ كوّن فريقك!\n${shareUrl}`
 
   const handleCopy = async () => {
     try {
@@ -107,36 +107,32 @@ function RegisterCompactShare() {
   }
 
   return (
-    <div className="mb-5 p-3.5 rounded-2xl bg-slate-900/50 border border-white/10 text-right">
-      <div className="flex items-center justify-between gap-2 mb-1">
-        <span className="text-xs font-bold text-amber-400 flex items-center gap-1">
-          <span>👥</span> <span>ادعي أصحابك!</span>
-        </span>
-      </div>
-      <p className="text-[11px] text-slate-300 mb-2.5 leading-relaxed">
-        شارك رابط اليوم الرياضي مع صحابك وخليهم يسجلوا معاك 🔥
+    <div className="mt-6 p-4 rounded-2xl bg-slate-900/80 border border-amber-500/30 text-center animate-float-up">
+      <p className="text-sm font-black text-amber-400 mb-3 flex items-center justify-center gap-1.5">
+        <span>🔥</span>
+        <span>شارك اليوم الرياضي</span>
       </p>
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={handleCopy}
-          className="flex-1 py-2 px-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer"
-        >
-          <span>{copied ? '✅' : '🔗'}</span>
-          <span>{copied ? 'تم نسخ الرابط!' : 'نسخ الرابط'}</span>
-        </button>
+      <div className="flex flex-col sm:flex-row gap-2.5">
         <button
           type="button"
           onClick={handleWhatsApp}
-          className="flex-1 py-2 px-2.5 rounded-xl bg-emerald-600/80 hover:bg-emerald-600 text-white text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer shadow-md"
+          className="flex-1 py-3 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-lg"
         >
           <span>💬</span>
-          <span>واتساب</span>
+          <span>مشاركة على واتساب</span>
+        </button>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="flex-1 py-3 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-white/10"
+        >
+          <span>{copied ? '✓' : '🔗'}</span>
+          <span>{copied ? 'تم نسخ الرابط!' : 'نسخ رابط الموقع'}</span>
         </button>
       </div>
       {copied && (
-        <p className="text-[10px] text-amber-300 mt-1.5 text-center font-semibold">
-          ✓ تم نسخ الرابط! شاركه الآن مع أصحابك
+        <p className="text-xs text-amber-300 mt-2 font-semibold animate-float-up">
+          تم نسخ الرابط! ✓
         </p>
       )}
     </div>
@@ -445,6 +441,9 @@ export default function Register() {
               )}
             </div>
           </div>
+
+          {/* 🔥 Share Sports Day Button & Links */}
+          <SuccessShareWidget />
         </div>
       </div>
     )
@@ -632,10 +631,7 @@ export default function Register() {
             <h1 className="text-2xl font-black text-white mb-1 text-right">
               {isUpdateMode ? 'تعديل البيانات المسجلة' : 'سجّل في اليوم الرياضي'}
             </h1>
-            <p className="text-slate-400 text-sm mb-4 text-right">كنيسة العذراء مريم بالبداري</p>
-
-            {/* ── Compact Countdown ── */}
-            <RegisterCompactCountdown />
+            <p className="text-slate-400 text-sm mb-6 text-right">كنيسة العذراء مريم بالبداري</p>
 
             {/* ── Name ── */}
             <div className="mb-4">
@@ -723,6 +719,14 @@ export default function Register() {
               {errors.preference && <p className="text-red-400 text-xs mt-1 text-right">{errors.preference}</p>}
             </div>
 
+            {/* ── No Preference Message ── */}
+            {form.preference === 'no' && (
+              <div className="mb-4 animate-float-up p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-right text-xs text-amber-300 flex items-center justify-end gap-2 font-semibold">
+                <span>تمام! هنختارلك فريق مناسب.</span>
+                <span className="text-base">🎲</span>
+              </div>
+            )}
+
             {/* ── Friends Count (only when "yes") ── */}
             {form.preference === 'yes' && (
               <div className="mb-4 animate-float-up">
@@ -780,10 +784,6 @@ export default function Register() {
               </div>
             )}
 
-
-            {/* ── Compact Invite Friends Share Widget ── */}
-            <RegisterCompactShare />
-
             {/* ── Submit ── */}
             <button
               onClick={handleSubmit}
@@ -796,6 +796,11 @@ export default function Register() {
             >
               {isUpdateMode ? 'مراجعة التعديلات ←' : 'التالي ←'}
             </button>
+
+            {/* ── Compact Countdown at the Very Bottom ── */}
+            <div className="mt-6 pt-2">
+              <RegisterCompactCountdown />
+            </div>
           </div>
         </div>
       </div>
