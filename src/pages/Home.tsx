@@ -1,5 +1,7 @@
 import { Page, TEAMS } from '../types'
 import logoImg from '../assets/logo.jpg'
+import Countdown from '../components/Countdown'
+import ShareSection from '../components/ShareSection'
 
 interface HomeProps {
   onNavigate: (p: Page) => void
@@ -107,16 +109,16 @@ export default function Home({ onNavigate }: HomeProps) {
     <main className="relative pt-16">
       {/* Hero */}
       <section
-        className="relative min-h-screen flex items-center overflow-hidden"
+        className="relative min-h-[90vh] flex flex-col justify-center overflow-hidden py-12 lg:py-16"
         style={{ background: 'linear-gradient(135deg, #040d1e 0%, #0d1b3e 50%, #071020 100%)' }}
       >
         <SportsBg />
-        <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
+        <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Right: Text content (RTL = right side displays first) */}
             <div className="text-right order-1 animate-float-up">
               {/* Logo prominent */}
-              <div className="flex justify-center lg:justify-end mb-8">
+              <div className="flex justify-center lg:justify-end mb-6">
                 <div className="relative">
                   <div className="absolute inset-0 rounded-full opacity-30 gold-glow animate-pulse-gold" />
                   <img
@@ -141,16 +143,15 @@ export default function Home({ onNavigate }: HomeProps) {
 
               {/* Title */}
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black leading-tight mb-4" dir="rtl">
-                <span className="text-white">اليوم </span>
-                <span className="shimmer-text">الرياضي</span>
+                <span className="text-white">🏆 اليوم الرياضي </span>
                 <br />
-                <span className="text-white text-3xl sm:text-4xl lg:text-5xl">لأسرة الكاروز</span>
+                <span className="shimmer-text text-3xl sm:text-4xl lg:text-5xl">لأسرة الكاروز</span>
               </h1>
 
               {/* Slogan */}
-              <p className="text-lg text-slate-300 mb-8 leading-relaxed">
-                تنافس، العب، وانتصر مع فريقك! <br />
-                <span className="text-amber-400 font-semibold">سجّل الآن وكون فريقك واعرف فريقك.</span>
+              <p className="text-xl sm:text-2xl font-bold text-amber-300 mb-6 leading-relaxed">
+                المنافسة مش يومها بس… <br className="sm:hidden" />
+                <span className="text-white">المنافسة بدأت من دلوقتي! 🔥</span>
               </p>
 
               {/* Teams preview pills */}
@@ -167,19 +168,19 @@ export default function Home({ onNavigate }: HomeProps) {
               </div>
 
               {/* CTA */}
-              <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-end">
+              <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-end mb-6">
                 <button
                   onClick={() => onNavigate('register')}
-                  className="group px-8 py-4 rounded-2xl text-lg font-black transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                  className="group px-8 py-4 rounded-2xl text-xl font-black transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-2xl"
                   style={{
                     background: 'linear-gradient(135deg, #F5A623 0%, #D97706 100%)',
                     color: '#040d1e',
-                    boxShadow: '0 4px 24px rgba(245,166,35,0.4)'
+                    boxShadow: '0 6px 30px rgba(245,166,35,0.5)'
                   }}
                 >
                   <span className="flex items-center justify-center gap-2">
-                    سجّل الآن
-                    <span className="group-hover:translate-x-1 transition-transform text-xl">🏃</span>
+                    سجّل الآن وابدأ كوّن فريقك
+                    <span className="group-hover:translate-x-1 transition-transform text-2xl">🏃</span>
                   </span>
                 </button>
               </div>
@@ -190,8 +191,16 @@ export default function Home({ onNavigate }: HomeProps) {
               <HeroSportsVisual />
             </div>
           </div>
+
+          {/* Countdown timer embedded prominently in Hero */}
+          <div className="mt-8">
+            <Countdown onNavigateRegister={() => onNavigate('register')} />
+          </div>
         </div>
       </section>
+
+      {/* Share Section */}
+      <ShareSection />
 
       {/* Teams section */}
       <section
@@ -265,3 +274,4 @@ export default function Home({ onNavigate }: HomeProps) {
     </main>
   )
 }
+
