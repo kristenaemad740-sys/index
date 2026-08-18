@@ -1,6 +1,7 @@
 import { Page } from '../types'
 import logoImg from '../assets/logo.jpg'
 import Countdown from '../components/Countdown'
+import ShareSection from '../components/ShareSection'
 
 interface HomeProps {
   onNavigate: (p: Page) => void
@@ -103,6 +104,11 @@ export default function Home({ onNavigate }: HomeProps) {
           >
             ابدأ المنافسة 🔥
           </button>
+        </div>
+
+        {/* 👥 قسم الدعوة ومشاركة الموقع */}
+        <div className="max-w-xl mx-auto">
+          <ShareSection />
         </div>
 
         {/* أسرة الكاروز */}
