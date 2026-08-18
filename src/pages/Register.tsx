@@ -610,12 +610,14 @@ export default function Register() {
             {form.preference === 'yes' && form.friendsCount > 0 && (
               <div className="mb-4 animate-float-up space-y-3">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 text-right">
+                  <label className="block text-sm font-semibold text-slate-300 text-right mb-1">
                     اكتب أسماء الأشخاص اللي تفضّل تكون معاهم
                   </label>
-                  <p className="text-amber-400/90 text-xs mt-1 text-right font-medium leading-relaxed">
-                    ⚠️ تنبيه: أسماء الأشخاص التي ستكتبها إذا لم يسجلوا بالفعل، يجب عليهم التسجيل بأنفسهم.
-                  </p>
+                  <div className="mt-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-right text-xs text-amber-300 space-y-1 leading-relaxed">
+                    <p className="font-bold text-amber-400">⚠️ خلي بالك:</p>
+                    <p>لو كتبت اسم صاحبك، إنت بتطلب إنك تكون معاه في نفس الفريق، مش بتسجّله.</p>
+                    <p>صاحبك لازم يسجّل بنفسه عشان يبقى مشارك رسمي، وبعد تسجيله هنخليكم تكونوا مع بعض في نفس الفريق.</p>
+                  </div>
                 </div>
                 {Array.from({ length: form.friendsCount }, (_, i) => (
                   <input
