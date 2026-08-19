@@ -601,18 +601,7 @@ export default function Register() {
           <p className="text-slate-400 text-right">
             أدخل بياناتك وسيقوم النظام بتعيين فريقك تلقائيًا مع مراعاة أصدقائك.
           </p>
-          <div className="grid grid-cols-2 gap-3">
-            {TEAMS.map(team => (
-              <div
-                key={team.id}
-                className="flex items-center gap-2 p-3 rounded-xl"
-                style={{ background: team.bg + 'aa', border: `1px solid ${team.color}33` }}
-              >
-                <span className="text-xl">{team.emoji}</span>
-                <span className="text-white text-sm font-semibold">{team.name}</span>
-              </div>
-            ))}
-          </div>
+
         </div>
 
         {/* ── Form panel ── */}
@@ -749,7 +738,7 @@ export default function Register() {
                   </label>
                   <div className="mt-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-right text-xs text-amber-300 leading-relaxed">
                     <p className="text-amber-300">
-                      <strong className="text-amber-400 font-bold">⚠️ خلي بالك:</strong> <strong className="text-amber-300 font-bold">كتابة اسم صاحبك مش بتسجّله.</strong> لو مسجل أو سجّل بعدك، <strong className="text-amber-300 font-bold">السيستم هيجمعكم مع بعض تلقائيًا.</strong>
+                      <strong className="text-amber-400 font-bold">⚠️ مهم:</strong> كتابة اسم صاحبك مش تسجيل ليه. هو لازم يسجّل بنفسه بعدك، وبعدها <strong className="text-amber-300 font-bold">السيستم هيجمعكم تلقائيًا في نفس الفريق.</strong>
                     </p>
                   </div>
                 </div>
