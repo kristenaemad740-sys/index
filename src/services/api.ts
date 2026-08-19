@@ -363,7 +363,20 @@ function saveRegistrations(registrations: Participant[]) {
   }
 }
 
-// ── 7. Full Registration Service ─────────────────────────────────────────────
+// ── 7. Teams Reveal Status Check ─────────────────────────────────────────────
+export async function checkTeamsRevealed(): Promise<boolean> {
+  if (!SCRIPT_URL || SCRIPT_URL.trim() === '') return false
+  try {
+    const res = await fetch(SCRIPT_URL)
+    if (!res.ok) return false
+    const data = await res.json()
+    return data.teamsRevealed === true
+  } catch {
+    return false
+  }
+}
+
+// ── 8. Full Registration Service ─────────────────────────────────────────────
 export async function registerParticipant(data: {
   name: string
   phone: string

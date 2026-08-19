@@ -53,12 +53,26 @@ function doPost(e) {
 
 function doGet(e) {
   const registrations = getSheetRegistrations();
+  const revealedProp = PropertiesService.getScriptProperties().getProperty('TEAMS_REVEALED');
   return createJsonResponse({
     status: 'online',
     service: 'Al-Karoz Sports Day API (Anchor Algorithm v4.8)',
     totalRegistrations: registrations.length,
+    teamsRevealed: revealedProp === 'true',
     timestamp: new Date().toISOString()
   });
+}
+
+// ── دوال الأدمن: تشغيلها مرة واحدة من Apps Script Editor ────────────────────
+// لإعلان الكشف عن الفرق: شغّل revealTeams()
+function revealTeams() {
+  PropertiesService.getScriptProperties().setProperty('TEAMS_REVEALED', 'true');
+  Logger.log('✅ Teams revealed! Users will now see their team.');
+}
+// لإعادة الإخفاء: شغّل hideTeams()
+function hideTeams() {
+  PropertiesService.getScriptProperties().setProperty('TEAMS_REVEALED', 'false');
+  Logger.log('🔒 Teams hidden again.');
 }
 
 function createJsonResponse(obj) {

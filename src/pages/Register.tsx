@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { RegisterView, Gender, TEAMS, getTeamById, Participant } from '../types'
-import { registerParticipant, validatePhone, normalizePhone } from '../services/api'
+import { registerParticipant, validatePhone, normalizePhone, checkTeamsRevealed } from '../services/api'
 import logoImg from '../assets/logo.jpg'
 
 // ── Arabic ordinal labels ────────────────────────────────────────────────────
@@ -112,6 +112,14 @@ export default function Register() {
   const [participant, setParticipant] = useState<Participant | null>(null)
   const [errorMsg, setErrorMsg] = useState('تعذر الاتصال بالخادم.')
   const [isUpdateMode, setIsUpdateMode] = useState<boolean>(false)
+  const [teamsRevealed, setTeamsRevealed] = useState<boolean>(false)
+
+  // Check if admin has revealed teams whenever user reaches success screen
+  useEffect(() => {
+    if (view === 'success') {
+      checkTeamsRevealed().then(revealed => setTeamsRevealed(revealed))
+    }
+  }, [view])
 
   const activeTeam = participant ? getTeamById(participant.team) : TEAMS[0]
 
@@ -323,54 +331,108 @@ export default function Register() {
   // SUCCESS
   // ════════════════════════════════════════════════════════════════════════════
   if (view === 'success' && participant) {
+    const mysteryMode = !teamsRevealed
+
     return (
       <div
         className={containerClass}
-        style={{ background: `linear-gradient(135deg, #040d1e 0%, ${activeTeam.bg} 100%)` }}
+        style={{
+          background: mysteryMode
+            ? 'linear-gradient(135deg, #040d1e 0%, #0d1b3e 100%)'
+            : `linear-gradient(135deg, #040d1e 0%, ${activeTeam.bg} 100%)`
+        }}
       >
         <SportsBg />
         <div className="w-full max-w-md relative z-10 animate-celebrate">
+
+          {/* ── Header ── */}
           <div className="text-center mb-8">
-            <div className="text-6xl mb-4">{activeTeam.emoji}</div>
+            <div className="text-6xl mb-4">{mysteryMode ? '🎉' : activeTeam.emoji}</div>
             <h1 className="text-3xl font-black text-white mb-2">
-              {isUpdateMode ? 'تم تحديث بياناتك بنجاح! 🎉' : 'تم تسجيلك بنجاح! 🎉'}
+              {isUpdateMode ? 'تم تحديث بياناتك بنجاح! 🎉' : 'تم تسجيلك بنجاح!'}
             </h1>
-            <div className="text-amber-300 text-lg font-semibold">مبروك عليك!</div>
+            <div className="text-amber-300 text-sm font-semibold">
+              أنت دلوقتي واحد من أبطال اليوم الرياضي 🏆
+            </div>
           </div>
 
-          <div
-            className={`glass-card rounded-3xl p-6 mb-6 ${activeTeam.glowClass}`}
-            style={{ border: `1px solid ${activeTeam.color}55` }}
-          >
-            <div className="text-center mb-6">
-              <div className="text-5xl mb-3">{activeTeam.emoji}</div>
-              <div className="text-2xl font-black" style={{ color: activeTeam.color }}>
-                {activeTeam.name}
+          {mysteryMode ? (
+            /* ── Mystery Card (teams not yet revealed) ── */
+            <div
+              className="glass-card rounded-3xl p-8 mb-6 text-center"
+              style={{
+                border: '1px solid rgba(245,166,35,0.35)',
+                boxShadow: '0 0 40px rgba(245,166,35,0.15), 0 0 80px rgba(245,166,35,0.06)'
+              }}
+            >
+              {/* Lock Icon */}
+              <div
+                className="text-6xl mb-4 animate-pulse-gold inline-block"
+                style={{ filter: 'drop-shadow(0 0 14px rgba(245,166,35,0.7))' }}
+              >
+                🔒
+              </div>
+
+              <div className="text-2xl font-black text-white mb-1">فريقك؟</div>
+              <div className="text-xl font-black text-amber-400 mb-5">لسه سر! 🤫</div>
+
+              <div className="h-px bg-white/10 mb-5" />
+
+              <p className="text-slate-300 text-sm leading-relaxed mb-1">
+                هيتم الكشف عن فريقك وإضافتك
+              </p>
+              <p className="text-slate-300 text-sm leading-relaxed mb-3">
+                لجروب واتساب الخاص بفريقك
+              </p>
+              <p className="text-amber-400 font-bold text-sm mb-5">
+                بعد اكتمال تكوين الفرق 🔥
+              </p>
+
+              <div
+                className="py-3 px-4 rounded-xl text-center"
+                style={{ background: 'rgba(245,166,35,0.1)', border: '1px solid rgba(245,166,35,0.2)' }}
+              >
+                <p className="text-amber-300 font-black text-sm">⏳ استعد… فريقك مستنيك!</p>
               </div>
             </div>
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between items-center py-2 border-b border-white/10">
-                <span className="font-bold text-white">{participant.name}</span>
-                <span className="text-slate-400">اسمك</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b border-white/10">
-                <span className="font-bold" style={{ color: activeTeam.color }}>
+          ) : (
+            /* ── Revealed Team Card ── */
+            <div
+              className={`glass-card rounded-3xl p-6 mb-6 ${activeTeam.glowClass}`}
+              style={{ border: `1px solid ${activeTeam.color}55` }}
+            >
+              <div className="text-center mb-6">
+                <div className="text-5xl mb-3">{activeTeam.emoji}</div>
+                <div className="text-2xl font-black" style={{ color: activeTeam.color }}>
                   {activeTeam.name}
-                </span>
-                <span className="text-slate-400">فريقك</span>
-              </div>
-              <div className="text-center py-2">
-                <p className="text-slate-300 text-sm font-semibold">سيتم إضافتك إلى مجموعتك.</p>
-              </div>
-              {participant.wantsFriends && (
-                <div className="text-center py-1">
-                  <p className="text-amber-300 text-sm font-semibold">تم مراعاة إضافتك مع أصدقائك.</p>
                 </div>
-              )}
+              </div>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between items-center py-2 border-b border-white/10">
+                  <span className="font-bold text-white">{participant.name}</span>
+                  <span className="text-slate-400">اسمك</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-white/10">
+                  <span className="font-bold" style={{ color: activeTeam.color }}>
+                    {activeTeam.name}
+                  </span>
+                  <span className="text-slate-400">فريقك</span>
+                </div>
+                <div className="text-center py-2">
+                  <p className="text-slate-300 text-sm font-semibold">
+                    ستُضاف إلى جروب واتساب فريقك قريبًا. 💬
+                  </p>
+                </div>
+                {participant.wantsFriends && (
+                  <div className="text-center py-1">
+                    <p className="text-amber-300 text-sm font-semibold">تم مراعاة إضافتك مع أصدقائك.</p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* 🔥 Share Sports Day Button & Links */}
+          {/* 🔥 Share Sports Day */}
           <SuccessShareWidget />
         </div>
       </div>
