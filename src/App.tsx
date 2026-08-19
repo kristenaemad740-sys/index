@@ -7,32 +7,27 @@ import Dashboard from './pages/Dashboard'
 import Footer from './components/Footer'
 
 export default function App() {
-  const [page, setPage] = useState<Page>(() => {
-    if (typeof window !== 'undefined') {
-      const path = window.location.pathname.toLowerCase()
-      const hash = window.location.hash.toLowerCase()
-      if (path === '/dashboard' || hash === '#dashboard') {
-        return 'dashboard'
-      }
-      if (path === '/register' || hash === '#register') {
-        return 'register'
-      }
+  const getPageFromUrl = (): Page => {
+    if (typeof window === 'undefined') return 'home'
+    const path = window.location.pathname.toLowerCase()
+    const hash = window.location.hash.toLowerCase()
+    const search = window.location.search.toLowerCase()
+
+    if (path.includes('dashboard') || hash.includes('dashboard') || search.includes('dashboard')) {
+      return 'dashboard'
+    }
+    if (path.includes('register') || hash.includes('register') || search.includes('register')) {
+      return 'register'
     }
     return 'home'
-  })
+  }
+
+  const [page, setPage] = useState<Page>(getPageFromUrl)
 
   // Sync with browser history and URL changes
   useEffect(() => {
     const handleLocationChange = () => {
-      const path = window.location.pathname.toLowerCase()
-      const hash = window.location.hash.toLowerCase()
-      if (path === '/dashboard' || hash === '#dashboard') {
-        setPage('dashboard')
-      } else if (path === '/register' || hash === '#register') {
-        setPage('register')
-      } else {
-        setPage('home')
-      }
+      setPage(getPageFromUrl())
     }
 
     window.addEventListener('popstate', handleLocationChange)
