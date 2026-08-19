@@ -568,7 +568,7 @@ export default function Register() {
                 type="text"
                 value={form.name}
                 onChange={e => { setForm(f => ({ ...f, name: e.target.value })); setErrors(er => ({ ...er, name: '' })) }}
-                placeholder="أدخل اسمك الكامل"
+                placeholder="أدخل اسمك بالعربي"
                 dir="rtl"
                 className="w-full px-4 py-3.5 rounded-xl text-white text-right outline-none transition-all"
                 style={inputStyle(!!errors.name)}
