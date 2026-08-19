@@ -1,4 +1,4 @@
-export type Page = 'home' | 'register'
+export type Page = 'home' | 'register' | 'dashboard'
 export type RegisterView = 'form' | 'confirm' | 'loading' | 'success' | 'error' | 'closed' | 'already_registered'
 export type Gender = 'male' | 'female'
 
@@ -21,6 +21,7 @@ export interface Participant {
   friendNames: string[]
   team: string
   registrationTime: string
+  friendParticipantId?: string
 }
 
 export interface Team {
@@ -45,6 +46,7 @@ export const TEAMS: Team[] = [
 export function getTeamById(id: string): Team {
   return TEAMS.find(t => t.id === id) ?? TEAMS[0]
 }
+
 export interface RegistrationRequest {
   name: string;
   phone: string;
@@ -52,4 +54,62 @@ export interface RegistrationRequest {
   wantsFriends: boolean;
   friendsCount: number;
   friendNames: string[];
+}
+
+// ── Dashboard Types ──────────────────────────────────────────────────────────
+export type FriendRequestStatus =
+  | 'SATISFIED'
+  | 'PENDING'
+  | 'MATCHED'
+  | 'AMBIGUOUS'
+  | 'UNRESOLVED'
+  | 'UNSATISFIED'
+
+export interface FriendRequestRecord {
+  id: string
+  requesterId: string
+  requesterName: string
+  requesterPhone: string
+  requesterTeam: string
+  requestedName: string
+  matchedParticipant: Participant | null
+  status: FriendRequestStatus
+  score: number
+  details?: string
+}
+
+export interface TeamStats {
+  team: Team
+  customName?: string
+  members: Participant[]
+  total: number
+  males: number
+  females: number
+  malePct: number
+  femalePct: number
+  capacityPct: number
+  balanceStatus: 'balanced' | 'slight_imbalance' | 'significant_imbalance'
+  deltaFromGlobalRatio: number
+}
+
+export interface DashboardSummary {
+  totalParticipants: number
+  totalMales: number
+  totalFemales: number
+  malePct: number
+  femalePct: number
+  teamCount: number
+  avgPerTeam: number
+  teamStats: TeamStats[]
+  totalFriendRequests: number
+  satisfiedRequests: number
+  pendingRequests: number
+  matchedRequests: number
+  ambiguousRequests: number
+  unresolvedRequests: number
+  unsatisfiedRequests: number
+  friendSatisfactionRate: number
+  recentRegistrations: Participant[]
+  allFriendRequests: FriendRequestRecord[]
+  pendingFriendsList: FriendRequestRecord[]
 }

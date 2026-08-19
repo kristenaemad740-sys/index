@@ -37,6 +37,34 @@ function doPost(e) {
         return createJsonResponse({ success: true, count: registrations.length, data: registrations });
       }
 
+      if (action === 'overrideTeam') {
+        const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME) || SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+        const rows = sheet.getDataRange().getValues();
+        const normPhone = normalizePhone(data.phone || '');
+        const targetId = String(data.id || '');
+        const newTeam = String(data.newTeam || '').toLowerCase().trim();
+
+        if (!newTeam || TEAMS.indexOf(newTeam) === -1) {
+          return createJsonResponse({ success: false, error: 'اسم الفريق غير صحيح' });
+        }
+
+        let foundRowIndex = -1;
+        for (let i = 1; i < rows.length; i++) {
+          const rowId = String(rows[i][0] || '');
+          const rowPhone = normalizePhone(String(rows[i][2] || ''));
+          if ((targetId && rowId === targetId) || (normPhone && rowPhone === normPhone)) {
+            foundRowIndex = i + 1;
+            break;
+          }
+        }
+
+        if (foundRowIndex !== -1) {
+          sheet.getRange(foundRowIndex, 8).setValue(newTeam);
+          return createJsonResponse({ success: true, updatedTeam: newTeam });
+        }
+        return createJsonResponse({ success: false, error: 'لم يتم العثور على المشترك في قاعدة البيانات' });
+      }
+
       if (action === 'register' || action === 'update') {
         const result = processRegistration(data);
         return createJsonResponse(result);
@@ -54,6 +82,12 @@ function doPost(e) {
 function doGet(e) {
   const registrations = getSheetRegistrations();
   const revealedProp = PropertiesService.getScriptProperties().getProperty('TEAMS_REVEALED');
+  const action = (e && e.parameter && e.parameter.action) || '';
+
+  if (action === 'getAll') {
+    return createJsonResponse({ success: true, count: registrations.length, data: registrations });
+  }
+
   return createJsonResponse({
     status: 'online',
     service: 'Al-Karoz Sports Day API (Anchor Algorithm v4.8)',

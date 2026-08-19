@@ -30,7 +30,7 @@ export default function Header({ page, onNavigate }: HeaderProps) {
         <nav className="flex items-center gap-1">
           <button
             onClick={() => onNavigate('home')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
               page === 'home'
                 ? 'text-amber-400 bg-amber-400/10'
                 : 'text-slate-300 hover:text-white hover:bg-white/5'
@@ -40,7 +40,7 @@ export default function Header({ page, onNavigate }: HeaderProps) {
           </button>
           <button
             onClick={() => onNavigate('register')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
               page === 'register'
                 ? 'text-amber-400 bg-amber-400/10'
                 : 'text-slate-300 hover:text-white hover:bg-white/5'
@@ -48,20 +48,35 @@ export default function Header({ page, onNavigate }: HeaderProps) {
           >
             التسجيل
           </button>
+          {(page === 'dashboard' || (typeof window !== 'undefined' && sessionStorage.getItem('karoz_admin_auth') === 'true')) && (
+            <button
+              onClick={() => onNavigate('dashboard')}
+              className={`px-3 py-2 rounded-lg text-sm font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                page === 'dashboard'
+                  ? 'text-amber-400 bg-amber-400/15 border border-amber-400/30'
+                  : 'text-amber-300/80 hover:text-amber-300 hover:bg-amber-400/10'
+              }`}
+            >
+              <span>⚙️</span>
+              <span className="hidden sm:inline">لوحة التحكم</span>
+            </button>
+          )}
         </nav>
 
-        {/* CTA */}
-        <button
-          onClick={() => onNavigate('register')}
-          className="px-5 py-2 rounded-xl text-sm font-bold transition-all active:scale-95 cursor-pointer"
-          style={{
-            background: 'linear-gradient(135deg, #F5A623, #D97706)',
-            color: '#040d1e',
-            boxShadow: '0 0 12px rgba(245,166,35,0.35)'
-          }}
-        >
-          سجّل الآن
-        </button>
+        {/* CTA & Admin Access */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onNavigate('register')}
+            className="px-5 py-2 rounded-xl text-sm font-bold transition-all active:scale-95 cursor-pointer"
+            style={{
+              background: 'linear-gradient(135deg, #F5A623, #D97706)',
+              color: '#040d1e',
+              boxShadow: '0 0 12px rgba(245,166,35,0.35)'
+            }}
+          >
+            سجّل الآن
+          </button>
+        </div>
       </div>
     </header>
   )

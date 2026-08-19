@@ -1,4 +1,4 @@
-import { Participant, Gender, TEAMS } from '../types'
+import { Participant, Gender, TEAMS, FriendRequestRecord, FriendRequestStatus, TeamStats, DashboardSummary } from '../types'
 
 const LOCAL_STORAGE_KEY = 'figma_make_registrations'
 const SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_URL || ''
@@ -499,3 +499,266 @@ export async function registerParticipant(data: {
     participant: newParticipant
   }
 }
+
+// ── 9. Fetch All Registrations (Live Backend or Cache) ───────────────────────
+export async function fetchAllRegistrations(): Promise<Participant[]> {
+  if (SCRIPT_URL && SCRIPT_URL.trim() !== '') {
+    try {
+      const response = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
+        body: JSON.stringify({ action: 'getAll' })
+      })
+
+      if (response.ok) {
+        const resData = await response.json()
+        if (resData.success && Array.isArray(resData.data)) {
+          const list: Participant[] = resData.data.map((p: any) => ({
+            id: String(p.id || ''),
+            name: String(p.name || '').trim(),
+            phone: normalizePhone(String(p.phone || '')),
+            gender: (String(p.gender || 'male').toLowerCase() === 'female' ? 'female' : 'male') as Gender,
+            wantsFriends: p.wantsFriends === true || String(p.wantsFriends).toUpperCase() === 'TRUE',
+            friendsCount: Number(p.friendsCount || 0),
+            friendNames: Array.isArray(p.friendNames) ? p.friendNames : (typeof p.friendNames === 'string' && p.friendNames ? p.friendNames.split(',').map((s: string) => s.trim()).filter(Boolean) : []),
+            team: String(p.team || '').toLowerCase(),
+            registrationTime: String(p.registrationTime || new Date().toISOString()),
+            friendParticipantId: p.friendParticipantId ? String(p.friendParticipantId) : undefined
+          }))
+          // Update local cache so offline works
+          saveRegistrations(list)
+          return list
+        }
+      }
+    } catch (err) {
+      console.warn('Could not fetch from GAS, falling back to local storage:', err)
+    }
+  }
+
+  // Fallback to local storage
+  return getRegistrations()
+}
+
+// ── 10. Manual Team Override (Admin Action) ──────────────────────────────────
+export async function overrideParticipantTeam(
+  participantId: string,
+  phone: string,
+  newTeam: string
+): Promise<{ success: boolean; error?: string }> {
+  const normPhone = normalizePhone(phone)
+  const normTeam = newTeam.toLowerCase().trim()
+
+  if (SCRIPT_URL && SCRIPT_URL.trim() !== '') {
+    try {
+      const response = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
+        body: JSON.stringify({
+          action: 'overrideTeam',
+          id: participantId,
+          phone: normPhone,
+          newTeam: normTeam
+        })
+      })
+
+      if (response.ok) {
+        const resData = await response.json()
+        if (!resData.success) {
+          return { success: false, error: resData.error || 'فشل تحديث الفريق في الخادم' }
+        }
+      }
+    } catch (err) {
+      console.error('Error overriding team in GAS:', err)
+    }
+  }
+
+  // Always update local cache as well
+  const localList = getRegistrations()
+  const idx = localList.findIndex(
+    p => (participantId && p.id === participantId) || (normPhone && normalizePhone(p.phone) === normPhone)
+  )
+
+  if (idx !== -1) {
+    localList[idx].team = normTeam
+    saveRegistrations(localList)
+  }
+
+  return { success: true }
+}
+
+// ── 11. Friend Request Analysis Engine ───────────────────────────────────────
+export function analyzeFriendRequests(participants: Participant[]): {
+  allRequests: FriendRequestRecord[]
+  satisfiedCount: number
+  pendingCount: number
+  matchedCount: number
+  ambiguousCount: number
+  unresolvedCount: number
+  unsatisfiedCount: number
+} {
+  const allRequests: FriendRequestRecord[] = []
+  let satisfiedCount = 0
+  let pendingCount = 0
+  let matchedCount = 0
+  let ambiguousCount = 0
+  let unresolvedCount = 0
+  let unsatisfiedCount = 0
+
+  for (const requester of participants) {
+    if (!requester.wantsFriends || !requester.friendNames || requester.friendNames.length === 0) {
+      continue
+    }
+
+    for (let i = 0; i < requester.friendNames.length; i++) {
+      const requestedName = requester.friendNames[i].trim()
+      if (!requestedName) continue
+
+      const matchRes = findMatchedParticipant(requestedName, participants)
+      let status: FriendRequestStatus = 'UNRESOLVED'
+      let matchedP: Participant | null = matchRes.matched
+      const score = matchRes.score
+
+      if (matchRes.status === 'MATCHED' && matchRes.matched) {
+        matchedP = matchRes.matched
+        if (matchedP.team === requester.team) {
+          status = 'SATISFIED'
+          satisfiedCount++
+        } else {
+          status = 'UNSATISFIED'
+          unsatisfiedCount++
+        }
+        matchedCount++
+      } else if (matchRes.status === 'AMBIGUOUS') {
+        status = 'AMBIGUOUS'
+        ambiguousCount++
+      } else {
+        // Not matched with anyone registered
+        if (score === 0 || participants.length === 0) {
+          status = 'PENDING'
+          pendingCount++
+        } else {
+          status = 'UNRESOLVED'
+          unresolvedCount++
+        }
+      }
+
+      allRequests.push({
+        id: `${requester.id}_req_${i}`,
+        requesterId: requester.id,
+        requesterName: requester.name,
+        requesterPhone: requester.phone,
+        requesterTeam: requester.team,
+        requestedName,
+        matchedParticipant: matchedP,
+        status,
+        score
+      })
+    }
+  }
+
+  return {
+    allRequests,
+    satisfiedCount,
+    pendingCount,
+    matchedCount,
+    ambiguousCount,
+    unresolvedCount,
+    unsatisfiedCount
+  }
+}
+
+// ── 12. Calculate Full Dashboard Summary ─────────────────────────────────────
+export function calculateDashboardSummary(participants: Participant[]): DashboardSummary {
+  const totalParticipants = participants.length
+  const totalMales = participants.filter(p => p.gender === 'male').length
+  const totalFemales = participants.filter(p => p.gender === 'female').length
+  const malePct = totalParticipants > 0 ? Math.round((totalMales / totalParticipants) * 100) : 0
+  const femalePct = totalParticipants > 0 ? Math.round((totalFemales / totalParticipants) * 100) : 0
+  const globalMaleRatio = totalParticipants > 0 ? totalMales / totalParticipants : 0.5
+  const teamCount = TEAMS.length
+  const avgPerTeam = totalParticipants > 0 ? Math.round((totalParticipants / teamCount) * 10) / 10 : 0
+
+  // Calculate maximum team size for capacity progress bar relative scaling
+  const teamCounts = TEAMS.map(t => participants.filter(p => p.team === t.id).length)
+  const maxTeamSize = Math.max(...teamCounts, 1)
+
+  const teamStats: TeamStats[] = TEAMS.map(team => {
+    const members = participants.filter(p => p.team === team.id)
+    const total = members.length
+    const males = members.filter(p => p.gender === 'male').length
+    const females = members.filter(p => p.gender === 'female').length
+    const tMalePct = total > 0 ? Math.round((males / total) * 100) : 0
+    const tFemalePct = total > 0 ? Math.round((females / total) * 100) : 0
+    const teamMaleRatio = total > 0 ? males / total : globalMaleRatio
+    const deltaFromGlobalRatio = Math.abs(teamMaleRatio - globalMaleRatio)
+    const capacityPct = totalParticipants > 0 ? Math.round((total / maxTeamSize) * 100) : 0
+
+    // Evaluate Balance
+    let balanceStatus: 'balanced' | 'slight_imbalance' | 'significant_imbalance' = 'balanced'
+    if (total === 0) {
+      balanceStatus = 'balanced'
+    } else {
+      const sizeDelta = Math.abs(total - avgPerTeam)
+      if (deltaFromGlobalRatio <= 0.12 && sizeDelta <= 2) {
+        balanceStatus = 'balanced'
+      } else if (deltaFromGlobalRatio <= 0.25 && sizeDelta <= 4) {
+        balanceStatus = 'slight_imbalance'
+      } else {
+        balanceStatus = 'significant_imbalance'
+      }
+    }
+
+    return {
+      team,
+      members,
+      total,
+      males,
+      females,
+      malePct: tMalePct,
+      femalePct: tFemalePct,
+      capacityPct,
+      balanceStatus,
+      deltaFromGlobalRatio
+    }
+  })
+
+  const friendAnalysis = analyzeFriendRequests(participants)
+  const totalFriendRequests = friendAnalysis.allRequests.length
+  const friendSatisfactionRate =
+    totalFriendRequests > 0
+      ? Math.round((friendAnalysis.satisfiedCount / totalFriendRequests) * 100)
+      : 100
+
+  const recentRegistrations = [...participants]
+    .sort((a, b) => new Date(b.registrationTime).getTime() - new Date(a.registrationTime).getTime())
+    .slice(0, 15)
+
+  const pendingFriendsList = friendAnalysis.allRequests.filter(r => r.status === 'PENDING')
+
+  return {
+    totalParticipants,
+    totalMales,
+    totalFemales,
+    malePct,
+    femalePct,
+    teamCount,
+    avgPerTeam,
+    teamStats,
+    totalFriendRequests,
+    satisfiedRequests: friendAnalysis.satisfiedCount,
+    pendingRequests: friendAnalysis.pendingCount,
+    matchedRequests: friendAnalysis.matchedCount,
+    ambiguousRequests: friendAnalysis.ambiguousCount,
+    unresolvedRequests: friendAnalysis.unresolvedCount,
+    unsatisfiedRequests: friendAnalysis.unsatisfiedCount,
+    friendSatisfactionRate,
+    recentRegistrations,
+    allFriendRequests: friendAnalysis.allRequests,
+    pendingFriendsList
+  }
+}
+
