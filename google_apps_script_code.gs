@@ -20,7 +20,7 @@
  * ==============================================================================
  */
 
-const TEAMS = ['red', 'green', 'yellow', 'black'];
+const TEAMS = ['red', 'green', 'yellow', 'black', 'blue', 'purple'];
 const SHEET_NAME = 'Sheet1';
 
 function doPost(e) {
@@ -221,9 +221,9 @@ function evaluateBalancedAssignment(newP, registered) {
   const totalFemales = totalReg - totalMales;
   const globalTargetRatio = (newP.gender === 'male' ? totalMales : totalFemales) / totalReg;
 
-  const teamSizes = { red: 0, green: 0, yellow: 0, black: 0 };
-  const teamMales = { red: 0, green: 0, yellow: 0, black: 0 };
-  const teamFemales = { red: 0, green: 0, yellow: 0, black: 0 };
+  const teamSizes = { red: 0, green: 0, yellow: 0, black: 0, blue: 0, purple: 0 };
+  const teamMales = { red: 0, green: 0, yellow: 0, black: 0, blue: 0, purple: 0 };
+  const teamFemales = { red: 0, green: 0, yellow: 0, black: 0, blue: 0, purple: 0 };
 
   for (let i = 0; i < registered.length; i++) {
     const p = registered[i];
@@ -235,7 +235,7 @@ function evaluateBalancedAssignment(newP, registered) {
     }
   }
 
-  const sizesArr = [teamSizes.red, teamSizes.green, teamSizes.yellow, teamSizes.black];
+  const sizesArr = [teamSizes.red, teamSizes.green, teamSizes.yellow, teamSizes.black, teamSizes.blue, teamSizes.purple];
   const minSize = Math.min.apply(null, sizesArr);
 
   const scores = {};
@@ -307,7 +307,7 @@ function assignTeamForParticipant(newP, registered) {
 
   // خطوة 2: إذا اختار wantsFriends == YES
   if (newP.wantsFriends && newP.friendNames && newP.friendNames.length > 0) {
-    const teamFriendCounts = { red: 0, green: 0, yellow: 0, black: 0 };
+    const teamFriendCounts = { red: 0, green: 0, yellow: 0, black: 0, blue: 0, purple: 0 };
     let totalMatched = 0;
 
     for (let i = 0; i < newP.friendNames.length; i++) {
@@ -330,7 +330,7 @@ function assignTeamForParticipant(newP, registered) {
       const topTeams = TEAMS.filter(function(t) { return teamFriendCounts[t] === maxFriends; });
       if (topTeams.length === 1) return topTeams[0];
 
-      const teamSizes = { red: 0, green: 0, yellow: 0, black: 0 };
+      const teamSizes = { red: 0, green: 0, yellow: 0, black: 0, blue: 0, purple: 0 };
       for (let i = 0; i < registered.length; i++) {
         if (registered[i].team in teamSizes) teamSizes[registered[i].team]++;
       }

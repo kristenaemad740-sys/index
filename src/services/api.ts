@@ -200,9 +200,9 @@ export function evaluateBalancedAssignment(
   const totalFemales = totalReg - totalMales
   const globalTargetRatio = (newP.gender === 'male' ? totalMales : totalFemales) / totalReg
 
-  const teamSizes: Record<string, number> = { red: 0, green: 0, yellow: 0, black: 0 }
-  const teamMales: Record<string, number> = { red: 0, green: 0, yellow: 0, black: 0 }
-  const teamFemales: Record<string, number> = { red: 0, green: 0, yellow: 0, black: 0 }
+  const teamSizes: Record<string, number> = { red: 0, green: 0, yellow: 0, black: 0, blue: 0, purple: 0 }
+  const teamMales: Record<string, number> = { red: 0, green: 0, yellow: 0, black: 0, blue: 0, purple: 0 }
+  const teamFemales: Record<string, number> = { red: 0, green: 0, yellow: 0, black: 0, blue: 0, purple: 0 }
 
   for (const p of registered) {
     if (p.team in teamSizes) {
@@ -302,7 +302,7 @@ export function assignTeamForParticipant(
 
   // Step 2: If wantsFriends == YES
   if (newP.wantsFriends && newP.friendNames && newP.friendNames.length > 0) {
-    const teamFriendCounts: Record<string, number> = { red: 0, green: 0, yellow: 0, black: 0 }
+    const teamFriendCounts: Record<string, number> = { red: 0, green: 0, yellow: 0, black: 0, blue: 0, purple: 0 }
     let totalMatchedFriends = 0
 
     for (const fn of newP.friendNames) {

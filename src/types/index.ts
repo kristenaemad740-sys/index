@@ -34,10 +34,12 @@ export interface Team {
 }
 
 export const TEAMS: Team[] = [
-  { id: 'red',    name: 'الفريق الأحمر',  color: '#DC2626', bg: '#7f1d1d', light: '#fee2e2', emoji: '🔴', glowClass: 'team-red-glow'    },
-  { id: 'green',  name: 'الفريق الأخضر',  color: '#16A34A', bg: '#14532d', light: '#dcfce7', emoji: '🟢', glowClass: 'team-green-glow'  },
-  { id: 'yellow', name: 'الفريق الأصفر',  color: '#CA8A04', bg: '#713f12', light: '#fef9c3', emoji: '🟡', glowClass: 'team-yellow-glow' },
-  { id: 'black',  name: 'الفريق الأسود',  color: '#374151', bg: '#111827', light: '#f3f4f6', emoji: '⚫', glowClass: 'team-black-glow'  },
+  { id: 'red',    name: 'الفريق الأحمر',      color: '#DC2626', bg: '#7f1d1d', light: '#fee2e2', emoji: '🔴', glowClass: 'team-red-glow'    },
+  { id: 'green',  name: 'الفريق الأخضر',      color: '#16A34A', bg: '#14532d', light: '#dcfce7', emoji: '🟢', glowClass: 'team-green-glow'  },
+  { id: 'yellow', name: 'الفريق الأصفر',      color: '#CA8A04', bg: '#713f12', light: '#fef9c3', emoji: '🟡', glowClass: 'team-yellow-glow' },
+  { id: 'black',  name: 'الفريق الأسود',      color: '#374151', bg: '#111827', light: '#f3f4f6', emoji: '⚫', glowClass: 'team-black-glow'  },
+  { id: 'blue',   name: 'الفريق الأزرق',      color: '#2563EB', bg: '#1e3a8a', light: '#dbeafe', emoji: '🔵', glowClass: 'team-blue-glow'   },
+  { id: 'purple', name: 'الفريق البنفسجي',    color: '#7C3AED', bg: '#4c1d95', light: '#ede9fe', emoji: '🟣', glowClass: 'team-purple-glow' },
 ]
 
 export function getTeamById(id: string): Team {

@@ -16,6 +16,8 @@
   --color-team-green: #16a34a;
   --color-team-yellow: #ca8a04;
   --color-team-black: #1f2937;
+  --color-team-blue: #2563eb;
+  --color-team-purple: #7c3aed;
 }
 
 *, *::before, *::after {
@@ -105,10 +107,12 @@ body {
   box-shadow: 0 0 20px rgba(245, 166, 35, 0.3), 0 0 60px rgba(245, 166, 35, 0.1);
 }
 
-.team-red-glow { box-shadow: 0 0 30px rgba(220, 38, 38, 0.4), 0 4px 20px rgba(220, 38, 38, 0.2); }
-.team-green-glow { box-shadow: 0 0 30px rgba(22, 163, 74, 0.4), 0 4px 20px rgba(22, 163, 74, 0.2); }
-.team-yellow-glow { box-shadow: 0 0 30px rgba(202, 138, 4, 0.4), 0 4px 20px rgba(202, 138, 4, 0.2); }
-.team-black-glow { box-shadow: 0 0 30px rgba(31, 41, 55, 0.8), 0 4px 20px rgba(100, 116, 139, 0.3); }
+.team-red-glow    { box-shadow: 0 0 30px rgba(220, 38, 38, 0.4),  0 4px 20px rgba(220, 38, 38, 0.2); }
+.team-green-glow  { box-shadow: 0 0 30px rgba(22, 163, 74, 0.4),  0 4px 20px rgba(22, 163, 74, 0.2); }
+.team-yellow-glow { box-shadow: 0 0 30px rgba(202, 138, 4, 0.4),  0 4px 20px rgba(202, 138, 4, 0.2); }
+.team-black-glow  { box-shadow: 0 0 30px rgba(31, 41, 55, 0.8),   0 4px 20px rgba(100, 116, 139, 0.3); }
+.team-blue-glow   { box-shadow: 0 0 30px rgba(37, 99, 235, 0.4),  0 4px 20px rgba(37, 99, 235, 0.2); }
+.team-purple-glow { box-shadow: 0 0 30px rgba(124, 58, 237, 0.4), 0 4px 20px rgba(124, 58, 237, 0.2); }
 
 input::placeholder { color: rgba(148, 163, 184, 0.6); }
 
