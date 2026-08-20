@@ -349,8 +349,33 @@ function assignTeamForParticipant(newP, registered) {
     }
   }
 
+  function getBestReverseTeam() {
+    const reverseTeamCounts = { red: 0, green: 0, yellow: 0, black: 0, blue: 0, purple: 0 };
+    for (let i = 0; i < reverseRequesters.length; i++) {
+      const t = reverseRequesters[i].team;
+      if (t in reverseTeamCounts) reverseTeamCounts[t]++;
+    }
+    let maxRev = 0;
+    for (let i = 0; i < TEAMS.length; i++) {
+      if (reverseTeamCounts[TEAMS[i]] > maxRev) maxRev = reverseTeamCounts[TEAMS[i]];
+    }
+    const topRevTeams = TEAMS.filter(function(t) { return reverseTeamCounts[t] === maxRev; });
+    if (topRevTeams.length === 1) return topRevTeams[0];
+
+    const teamSizes = { red: 0, green: 0, yellow: 0, black: 0, blue: 0, purple: 0 };
+    for (let i = 0; i < registered.length; i++) {
+      if (registered[i].team in teamSizes) teamSizes[registered[i].team]++;
+    }
+    let minSize = 999999;
+    for (let i = 0; i < topRevTeams.length; i++) {
+      if (teamSizes[topRevTeams[i]] < minSize) minSize = teamSizes[topRevTeams[i]];
+    }
+    const tiedSmallest = topRevTeams.filter(function(t) { return teamSizes[t] === minSize; });
+    return tiedSmallest[0];
+  }
+
   if (reverseRequesters.length > 0 && (!newP.wantsFriends || !newP.friendNames || newP.friendNames.length === 0)) {
-    return reverseRequesters[0].team;
+    return getBestReverseTeam();
   }
 
   // خطوة 2: إذا اختار wantsFriends == YES
@@ -391,7 +416,7 @@ function assignTeamForParticipant(newP, registered) {
     }
 
     if (reverseRequesters.length > 0) {
-      return reverseRequesters[0].team;
+      return getBestReverseTeam();
     }
   }
 

@@ -295,9 +295,28 @@ export function assignTeamForParticipant(
     }
   }
 
+  const getBestReverseTeam = (): string => {
+    const reverseTeamCounts: Record<string, number> = { red: 0, green: 0, yellow: 0, black: 0, blue: 0, purple: 0 }
+    for (const r of reverseRequesters) {
+      if (r.team in reverseTeamCounts) reverseTeamCounts[r.team]++
+    }
+    const maxRev = Math.max(...teamIds.map(t => reverseTeamCounts[t]))
+    const topRevTeams = teamIds.filter(t => reverseTeamCounts[t] === maxRev)
+    if (topRevTeams.length === 1) return topRevTeams[0]
+
+    // Tie-breaker by team size
+    const teamSizes: Record<string, number> = { red: 0, green: 0, yellow: 0, black: 0, blue: 0, purple: 0 }
+    for (const p of registered) {
+      if (p.team in teamSizes) teamSizes[p.team]++
+    }
+    const minSize = Math.min(...topRevTeams.map(t => teamSizes[t]))
+    const tiedSmallest = topRevTeams.filter(t => teamSizes[t] === minSize)
+    return tiedSmallest[0]
+  }
+
   // If newP chose wantsFriends == NO (or has no valid friends), but was requested earlier -> join that requester's team!
   if (reverseRequesters.length > 0 && (!newP.wantsFriends || !newP.friendNames || newP.friendNames.length === 0)) {
-    return reverseRequesters[0].team
+    return getBestReverseTeam()
   }
 
   // Step 2: If wantsFriends == YES
@@ -323,8 +342,8 @@ export function assignTeamForParticipant(
       if (topTeams.length === 1) {
         return topTeams[0]
       } else {
-        // Tied friend count -> pick the one with smaller size
-        const teamSizes: Record<string, number> = { red: 0, green: 0, yellow: 0, black: 0 }
+        // Tied friend count -> pick the one with smaller size & better gender balance
+        const teamSizes: Record<string, number> = { red: 0, green: 0, yellow: 0, black: 0, blue: 0, purple: 0 }
         for (const p of registered) {
           if (p.team in teamSizes) teamSizes[p.team]++
         }
@@ -336,11 +355,11 @@ export function assignTeamForParticipant(
 
     // If forward friend matching found nobody registered yet, but reverse requesters exist:
     if (reverseRequesters.length > 0) {
-      return reverseRequesters[0].team
+      return getBestReverseTeam()
     }
   }
 
-  // Step 3: Balanced Assignment (wantsFriends == NO or friend not registered yet)
+  // Step 3: Balanced Assignment (wantsFriends == NO or friends not registered yet)
   return evaluateBalancedAssignment(newP, registered)
 }
 

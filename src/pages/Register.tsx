@@ -4,7 +4,7 @@ import { registerParticipant, validatePhone, normalizePhone, checkTeamsRevealed 
 import logoImg from '../assets/logo.jpg'
 
 // ── Arabic ordinal labels ────────────────────────────────────────────────────
-const ARABIC_ORDINALS = ['الأول', 'الثاني', 'الثالث']
+const ARABIC_ORDINALS = ['الأول', 'الثاني', 'الثالث', 'الرابع']
 
 
 
