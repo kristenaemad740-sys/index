@@ -248,17 +248,20 @@ export default function Register() {
         }}
       >
         <SportsBg />
-        <div className="w-full max-w-md relative z-10 animate-float-up">
-          <div className="text-center mb-6">
-            <div className="text-5xl mb-3">📱</div>
-            <h1 className="text-2xl font-black text-white mb-1">أنت مسجل بالفعل!</h1>
-            <p className="text-amber-400 text-sm font-semibold">
-              تم العثور على بيانات تسجيل سابقة برقم الواتساب هذا
+        <div className="w-full max-w-md relative z-10 animate-celebrate">
+
+          {/* ── Header (same as success) ── */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl sm:text-4xl font-black text-white mb-2 leading-tight">
+              🎉 تم تسجيلك بنجاح!
+            </h1>
+            <p className="text-amber-300 text-base sm:text-lg font-bold">
+              أنت دلوقتي واحد من أبطال اليوم الرياضي. 🏆
             </p>
           </div>
 
           {mysteryMode ? (
-            /* ── Mystery Card (teams not yet revealed) ── */
+            /* ── Mystery Card ── */
             <div
               className="glass-card rounded-3xl p-8 mb-6 text-center relative overflow-hidden"
               style={{
@@ -279,27 +282,7 @@ export default function Register() {
 
               <div className="h-px bg-white/10 mb-5" />
 
-              {/* Registered data (name only, no team) */}
-              <div className="space-y-2 text-sm mb-6">
-                <div className="flex justify-between items-center py-2 border-b border-white/10">
-                  <span className="font-bold text-white">{participant.name}</span>
-                  <span className="text-slate-400">الاسم</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-white/10">
-                  <span className="font-bold text-white text-left" dir="ltr">
-                    {normalizePhone(participant.phone)}
-                  </span>
-                  <span className="text-slate-400">الواتساب</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-white/10">
-                  <span className="font-bold text-amber-400">
-                    {participant.gender === 'male' ? '👦 ولد' : '👧 بنت'}
-                  </span>
-                  <span className="text-slate-400">النوع</span>
-                </div>
-              </div>
-
-              <p className="text-slate-200 text-sm sm:text-base leading-relaxed mb-5 font-medium">
+              <p className="text-slate-200 text-sm sm:text-base leading-relaxed mb-6 font-medium">
                 هيتم الكشف عن فريقك وإضافتك لجروب واتساب الخاص بفريقك بعد اكتمال تكوين الفرق. 🔥
               </p>
 
@@ -326,40 +309,33 @@ export default function Register() {
                 <div className="text-2xl font-black" style={{ color: activeTeam.color }}>
                   {activeTeam.name}
                 </div>
-                <p className="text-slate-400 text-xs mt-1">فريقك المسجل</p>
               </div>
-
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between items-center py-2.5 border-b border-white/10">
                   <span className="font-bold text-white">{participant.name}</span>
-                  <span className="text-slate-400">الاسم</span>
+                  <span className="text-slate-400">اسمك</span>
                 </div>
                 <div className="flex justify-between items-center py-2.5 border-b border-white/10">
-                  <span className="font-bold text-white text-left" dir="ltr">
-                    {normalizePhone(participant.phone)}
+                  <span className="font-bold" style={{ color: activeTeam.color }}>
+                    {activeTeam.name}
                   </span>
-                  <span className="text-slate-400">رقم الواتساب</span>
+                  <span className="text-slate-400">فريقك</span>
                 </div>
-                <div className="flex justify-between items-center py-2.5 border-b border-white/10">
-                  <span className="font-bold text-amber-400">
-                    {participant.gender === 'male' ? '👦 ولد' : '👧 بنت'}
-                  </span>
-                  <span className="text-slate-400">النوع</span>
+                <div className="text-center py-2">
+                  <p className="text-slate-300 text-sm font-semibold">
+                    ستُضاف إلى جروب واتساب فريقك قريبًا. 💬
+                  </p>
                 </div>
-                {participant.wantsFriends && participant.friendNames.length > 0 && (
-                  <div className="flex justify-between items-start py-2.5">
-                    <div className="text-right max-w-[60%]">
-                      {participant.friendNames.map((name, i) => (
-                        <p key={i} className="font-bold text-amber-300 text-xs mb-0.5">{name}</p>
-                      ))}
-                    </div>
-                    <span className="text-slate-400 shrink-0 mr-2">الأصدقاء</span>
+                {participant.wantsFriends && (
+                  <div className="text-center py-1">
+                    <p className="text-amber-300 text-sm font-semibold">تم مراعاة إضافتك مع أصدقائك.</p>
                   </div>
                 )}
               </div>
             </div>
           )}
 
+          {/* Edit button */}
           <button
             onClick={() => {
               setForm({
@@ -373,22 +349,13 @@ export default function Register() {
               setIsUpdateMode(true)
               setView('form')
             }}
-            className="w-full py-4 rounded-2xl font-black text-lg transition-all hover:scale-105 active:scale-95 mb-3 cursor-pointer"
-            style={{
-              background: 'linear-gradient(135deg, #F5A623, #D97706)',
-              color: '#040d1e',
-              boxShadow: '0 4px 20px rgba(245,166,35,0.4)'
-            }}
+            className="w-full py-3 rounded-xl text-slate-300 hover:text-white text-sm transition-colors cursor-pointer border border-white/10 glass-card mb-2"
           >
             تعديل البيانات ✏️
           </button>
 
-          <button
-            onClick={() => setView('success')}
-            className="w-full py-3 rounded-xl text-slate-300 hover:text-white text-sm transition-colors cursor-pointer border border-white/10 glass-card"
-          >
-            {teamsRevealed ? 'عرض بطاقة فريقك ✓' : 'عرض بطاقة التسجيل ✓'}
-          </button>
+          {/* Share Widget */}
+          <SuccessShareWidget />
         </div>
       </div>
     )
