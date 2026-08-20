@@ -236,10 +236,16 @@ export default function Register() {
   // ALREADY REGISTERED VIEW
   // ════════════════════════════════════════════════════════════════════════════
   if (view === 'already_registered' && participant) {
+    const mysteryMode = !teamsRevealed
+
     return (
       <div
         className={containerClass}
-        style={{ background: `linear-gradient(135deg, #040d1e 0%, ${activeTeam.bg} 100%)` }}
+        style={{
+          background: mysteryMode
+            ? 'linear-gradient(135deg, #040d1e 0%, #0d1b3e 100%)'
+            : `linear-gradient(135deg, #040d1e 0%, ${activeTeam.bg} 100%)`
+        }}
       >
         <SportsBg />
         <div className="w-full max-w-md relative z-10 animate-float-up">
@@ -251,47 +257,108 @@ export default function Register() {
             </p>
           </div>
 
-          <div
-            className={`glass-card rounded-3xl p-6 mb-6 ${activeTeam.glowClass}`}
-            style={{ border: `1px solid ${activeTeam.color}55` }}
-          >
-            <div className="text-center mb-6">
-              <div className="text-5xl mb-2">{activeTeam.emoji}</div>
-              <div className="text-2xl font-black" style={{ color: activeTeam.color }}>
-                {activeTeam.name}
+          {mysteryMode ? (
+            /* ── Mystery Card (teams not yet revealed) ── */
+            <div
+              className="glass-card rounded-3xl p-8 mb-6 text-center relative overflow-hidden"
+              style={{
+                border: '1px solid rgba(245,166,35,0.4)',
+                boxShadow: '0 0 35px rgba(245,166,35,0.18), 0 0 70px rgba(245,166,35,0.06)'
+              }}
+            >
+              <div
+                className="text-6xl mb-4 animate-pulse-gold inline-block"
+                style={{ filter: 'drop-shadow(0 0 16px rgba(245,166,35,0.8))' }}
+              >
+                🔒
               </div>
-              <p className="text-slate-400 text-xs mt-1">فريقك المسجل</p>
-            </div>
 
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between items-center py-2.5 border-b border-white/10">
-                <span className="font-bold text-white">{participant.name}</span>
-                <span className="text-slate-400">الاسم</span>
-              </div>
-              <div className="flex justify-between items-center py-2.5 border-b border-white/10">
-                <span className="font-bold text-white text-left" dir="ltr">
-                  {normalizePhone(participant.phone)}
-                </span>
-                <span className="text-slate-400">رقم الواتساب</span>
-              </div>
-              <div className="flex justify-between items-center py-2.5 border-b border-white/10">
-                <span className="font-bold text-amber-400">
-                  {participant.gender === 'male' ? '👦 ولد' : '👧 بنت'}
-                </span>
-                <span className="text-slate-400">النوع</span>
-              </div>
-              {participant.wantsFriends && participant.friendNames.length > 0 && (
-                <div className="flex justify-between items-start py-2.5">
-                  <div className="text-right max-w-[60%]">
-                    {participant.friendNames.map((name, i) => (
-                      <p key={i} className="font-bold text-amber-300 text-xs mb-0.5">{name}</p>
-                    ))}
-                  </div>
-                  <span className="text-slate-400 shrink-0 mr-2">الأصدقاء</span>
+              <h2 className="text-2xl sm:text-3xl font-black text-white mb-4">
+                فريقك؟ <span className="text-amber-400">لسه سر!</span>
+              </h2>
+
+              <div className="h-px bg-white/10 mb-5" />
+
+              {/* Registered data (name only, no team) */}
+              <div className="space-y-2 text-sm mb-6">
+                <div className="flex justify-between items-center py-2 border-b border-white/10">
+                  <span className="font-bold text-white">{participant.name}</span>
+                  <span className="text-slate-400">الاسم</span>
                 </div>
-              )}
+                <div className="flex justify-between items-center py-2 border-b border-white/10">
+                  <span className="font-bold text-white text-left" dir="ltr">
+                    {normalizePhone(participant.phone)}
+                  </span>
+                  <span className="text-slate-400">الواتساب</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-white/10">
+                  <span className="font-bold text-amber-400">
+                    {participant.gender === 'male' ? '👦 ولد' : '👧 بنت'}
+                  </span>
+                  <span className="text-slate-400">النوع</span>
+                </div>
+              </div>
+
+              <p className="text-slate-200 text-sm sm:text-base leading-relaxed mb-5 font-medium">
+                هيتم الكشف عن فريقك وإضافتك لجروب واتساب الخاص بفريقك بعد اكتمال تكوين الفرق. 🔥
+              </p>
+
+              <div
+                className="py-3.5 px-4 rounded-2xl text-center"
+                style={{
+                  background: 'rgba(245,166,35,0.12)',
+                  border: '1px solid rgba(245,166,35,0.3)'
+                }}
+              >
+                <p className="text-amber-300 font-black text-sm sm:text-base">
+                  ⏳ استعد… فريقك مستنيك!
+                </p>
+              </div>
             </div>
-          </div>
+          ) : (
+            /* ── Revealed Team Card ── */
+            <div
+              className={`glass-card rounded-3xl p-6 mb-6 ${activeTeam.glowClass}`}
+              style={{ border: `1px solid ${activeTeam.color}55` }}
+            >
+              <div className="text-center mb-6">
+                <div className="text-5xl mb-2">{activeTeam.emoji}</div>
+                <div className="text-2xl font-black" style={{ color: activeTeam.color }}>
+                  {activeTeam.name}
+                </div>
+                <p className="text-slate-400 text-xs mt-1">فريقك المسجل</p>
+              </div>
+
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between items-center py-2.5 border-b border-white/10">
+                  <span className="font-bold text-white">{participant.name}</span>
+                  <span className="text-slate-400">الاسم</span>
+                </div>
+                <div className="flex justify-between items-center py-2.5 border-b border-white/10">
+                  <span className="font-bold text-white text-left" dir="ltr">
+                    {normalizePhone(participant.phone)}
+                  </span>
+                  <span className="text-slate-400">رقم الواتساب</span>
+                </div>
+                <div className="flex justify-between items-center py-2.5 border-b border-white/10">
+                  <span className="font-bold text-amber-400">
+                    {participant.gender === 'male' ? '👦 ولد' : '👧 بنت'}
+                  </span>
+                  <span className="text-slate-400">النوع</span>
+                </div>
+                {participant.wantsFriends && participant.friendNames.length > 0 && (
+                  <div className="flex justify-between items-start py-2.5">
+                    <div className="text-right max-w-[60%]">
+                      {participant.friendNames.map((name, i) => (
+                        <p key={i} className="font-bold text-amber-300 text-xs mb-0.5">{name}</p>
+                      ))}
+                    </div>
+                    <span className="text-slate-400 shrink-0 mr-2">الأصدقاء</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           <button
             onClick={() => {
