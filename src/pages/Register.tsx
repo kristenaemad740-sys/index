@@ -252,11 +252,12 @@ export default function Register() {
 
           {/* ── Header (same as success) ── */}
           <div className="text-center mb-8">
+            <div className="text-5xl mb-3">🎉</div>
             <h1 className="text-3xl sm:text-4xl font-black text-white mb-2 leading-tight">
-              🎉 تم تسجيلك بنجاح!
+              تم تسجيلك بنجاح!
             </h1>
-            <p className="text-amber-300 text-base sm:text-lg font-bold">
-              أنت دلوقتي واحد من أبطال اليوم الرياضي. 🏆
+            <p className="text-amber-300 text-sm sm:text-base font-semibold">
+              أنت دلوقتي واحد من أبطال اليوم الرياضي 🏆
             </p>
           </div>
 
@@ -265,37 +266,37 @@ export default function Register() {
             <div
               className="glass-card rounded-3xl p-8 mb-6 text-center relative overflow-hidden"
               style={{
-                border: '1px solid rgba(245,166,35,0.4)',
-                boxShadow: '0 0 35px rgba(245,166,35,0.18), 0 0 70px rgba(245,166,35,0.06)'
+                border: '1px solid rgba(245,166,35,0.35)',
+                boxShadow: '0 0 40px rgba(245,166,35,0.15), 0 0 80px rgba(245,166,35,0.06)'
               }}
             >
               <div
                 className="text-6xl mb-4 animate-pulse-gold inline-block"
-                style={{ filter: 'drop-shadow(0 0 16px rgba(245,166,35,0.8))' }}
+                style={{ filter: 'drop-shadow(0 0 14px rgba(245,166,35,0.7))' }}
               >
                 🔒
               </div>
 
-              <h2 className="text-2xl sm:text-3xl font-black text-white mb-4">
-                فريقك؟ <span className="text-amber-400">لسه سر!</span>
-              </h2>
+              <div className="text-2xl font-black text-white mb-1">فريقك؟</div>
+              <div className="text-xl font-black text-amber-400 mb-5">لسه سر! 🤫</div>
 
               <div className="h-px bg-white/10 mb-5" />
 
-              <p className="text-slate-200 text-sm sm:text-base leading-relaxed mb-6 font-medium">
-                هيتم الكشف عن فريقك وإضافتك لجروب واتساب الخاص بفريقك بعد اكتمال تكوين الفرق. 🔥
+              <p className="text-slate-300 text-sm leading-relaxed mb-1">
+                هيتم الكشف عن فريقك وإضافتك
+              </p>
+              <p className="text-slate-300 text-sm leading-relaxed mb-3">
+                لجروب واتساب الخاص بفريقك
+              </p>
+              <p className="text-amber-400 font-bold text-sm mb-5">
+                بعد اكتمال تكوين الفرق 🔥
               </p>
 
               <div
-                className="py-3.5 px-4 rounded-2xl text-center"
-                style={{
-                  background: 'rgba(245,166,35,0.12)',
-                  border: '1px solid rgba(245,166,35,0.3)'
-                }}
+                className="py-3 px-4 rounded-xl text-center"
+                style={{ background: 'rgba(245,166,35,0.1)', border: '1px solid rgba(245,166,35,0.2)' }}
               >
-                <p className="text-amber-300 font-black text-sm sm:text-base">
-                  ⏳ استعد… فريقك مستنيك!
-                </p>
+                <p className="text-amber-300 font-black text-sm">⏳ استعد… فريقك مستنيك!</p>
               </div>
             </div>
           ) : (
@@ -381,11 +382,12 @@ export default function Register() {
 
           {/* ── Header ── */}
           <div className="text-center mb-8">
+            <div className="text-5xl mb-3">🎉</div>
             <h1 className="text-3xl sm:text-4xl font-black text-white mb-2 leading-tight">
-              🎉 تم تسجيلك بنجاح!
+              تم تسجيلك بنجاح!
             </h1>
-            <p className="text-amber-300 text-base sm:text-lg font-bold">
-              أنت دلوقتي واحد من أبطال اليوم الرياضي. 🏆
+            <p className="text-amber-300 text-sm sm:text-base font-semibold">
+              أنت دلوقتي واحد من أبطال اليوم الرياضي 🏆
             </p>
           </div>
 
@@ -394,41 +396,42 @@ export default function Register() {
             <div
               className="glass-card rounded-3xl p-8 mb-6 text-center relative overflow-hidden"
               style={{
-                border: '1px solid rgba(245,166,35,0.4)',
-                boxShadow: '0 0 35px rgba(245,166,35,0.18), 0 0 70px rgba(245,166,35,0.06)'
+                border: '1px solid rgba(245,166,35,0.35)',
+                boxShadow: '0 0 40px rgba(245,166,35,0.15), 0 0 80px rgba(245,166,35,0.06)'
               }}
             >
               {/* Lock Icon */}
               <div
                 className="text-6xl mb-4 animate-pulse-gold inline-block"
-                style={{ filter: 'drop-shadow(0 0 16px rgba(245,166,35,0.8))' }}
+                style={{ filter: 'drop-shadow(0 0 14px rgba(245,166,35,0.7))' }}
               >
                 🔒
               </div>
 
-              {/* Secret Title */}
-              <h2 className="text-2xl sm:text-3xl font-black text-white mb-4">
-                فريقك؟ <span className="text-amber-400">لسه سر!</span>
-              </h2>
+              {/* "فريقك؟" on its own line */}
+              <div className="text-2xl font-black text-white mb-1">فريقك؟</div>
+              {/* "لسه سر!" on its own line in amber */}
+              <div className="text-xl font-black text-amber-400 mb-5">لسه سر! 🤫</div>
 
               <div className="h-px bg-white/10 mb-5" />
 
-              {/* Message */}
-              <p className="text-slate-200 text-sm sm:text-base leading-relaxed mb-6 font-medium">
-                هيتم الكشف عن فريقك وإضافتك لجروب واتساب الخاص بفريقك بعد اكتمال تكوين الفرق. 🔥
+              {/* Message — split across lines as in screenshot */}
+              <p className="text-slate-300 text-sm leading-relaxed mb-1">
+                هيتم الكشف عن فريقك وإضافتك
+              </p>
+              <p className="text-slate-300 text-sm leading-relaxed mb-3">
+                لجروب واتساب الخاص بفريقك
+              </p>
+              <p className="text-amber-400 font-bold text-sm mb-5">
+                بعد اكتمال تكوين الفرق 🔥
               </p>
 
-              {/* Countdown / Ready Badge */}
+              {/* Ready Badge */}
               <div
-                className="py-3.5 px-4 rounded-2xl text-center"
-                style={{
-                  background: 'rgba(245,166,35,0.12)',
-                  border: '1px solid rgba(245,166,35,0.3)'
-                }}
+                className="py-3 px-4 rounded-xl text-center"
+                style={{ background: 'rgba(245,166,35,0.1)', border: '1px solid rgba(245,166,35,0.2)' }}
               >
-                <p className="text-amber-300 font-black text-sm sm:text-base">
-                  ⏳ استعد… فريقك مستنيك!
-                </p>
+                <p className="text-amber-300 font-black text-sm">⏳ استعد… فريقك مستنيك!</p>
               </div>
             </div>
           ) : (
