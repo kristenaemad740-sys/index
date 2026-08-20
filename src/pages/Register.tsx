@@ -752,7 +752,7 @@ export default function Register() {
                   كام شخص تفضّل تكون معاهم؟
                 </label>
                 <div className="flex gap-2 flex-wrap justify-end">
-                  {[1, 2, 3].map(n => (
+                  {[1, 2, 3, 4].map(n => (
                     <button
                       key={n}
                       type="button"
