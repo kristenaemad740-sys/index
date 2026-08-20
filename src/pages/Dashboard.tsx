@@ -218,25 +218,25 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
     switch (status) {
       case 'SATISFIED':
         return (
-          <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+          <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 whitespace-nowrap">
             ✓ في نفس الفريق
           </span>
         )
       case 'PENDING':
         return (
-          <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
-            ⏳ معلق (لم يسجل بعد)
+          <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 whitespace-nowrap">
+            ⏳ معلق (لم يسجل)
           </span>
         )
       case 'UNSATISFIED':
         return (
-          <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-500/15 text-rose-300 border border-rose-500/30">
+          <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-500/15 text-rose-300 border border-rose-500/30 whitespace-nowrap">
             ⚠️ في فريق آخر
           </span>
         )
       default:
         return (
-          <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-500/15 text-slate-300 border border-slate-500/30">
+          <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-500/15 text-slate-300 border border-slate-500/30 whitespace-nowrap">
             • قيد المعالجة
           </span>
         )
@@ -253,7 +253,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
         style={{ background: 'linear-gradient(135deg, #040d1e 0%, #0d1b3e 100%)' }}
       >
         <div className="w-full max-w-sm relative z-10 animate-float-up">
-          <div className="glass-card rounded-3xl p-8 gold-glow border border-amber-500/30 text-center">
+          <div className="glass-card rounded-3xl p-6 sm:p-8 gold-glow border border-amber-500/30 text-center">
             {/* Logo */}
             <img src={logoImg} alt="أسرة الكاروز" className="w-20 h-20 mx-auto mb-4 rounded-2xl object-cover border border-amber-400/30 p-1 shadow-lg" />
             
@@ -316,48 +316,48 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
   }
 
   // ════════════════════════════════════════════════════════════════════════════
-  // 🏆 CLEAN & SIMPLE DASHBOARD
+  // 🏆 MOBILE-FIRST CLEAN & RESPONSIVE DASHBOARD
   // ════════════════════════════════════════════════════════════════════════════
   return (
     <div
-      className="min-h-screen pt-20 pb-16 px-4 sm:px-6 lg:px-8 text-slate-100 relative"
+      className="min-h-screen pt-18 sm:pt-20 pb-16 px-3 sm:px-6 lg:px-8 text-slate-100 relative"
       style={{ background: 'linear-gradient(135deg, #040d1e 0%, #08142c 50%, #0d1b3e 100%)' }}
     >
       {/* Toast Alert */}
       {toastMessage && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-float-up">
-          <div className="bg-slate-900 border border-amber-500/40 text-amber-300 px-5 py-2.5 rounded-2xl shadow-2xl backdrop-blur-xl font-bold text-xs flex items-center gap-2">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-float-up max-w-[90vw] text-center">
+          <div className="bg-slate-900/95 border border-amber-500/40 text-amber-300 px-4 py-2.5 rounded-2xl shadow-2xl backdrop-blur-xl font-bold text-xs flex items-center justify-center gap-2">
             <span>✨</span>
             <span>{toastMessage}</span>
           </div>
         </div>
       )}
 
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
 
         {/* ── Top Clean Header ── */}
-        <div className="glass-card rounded-3xl p-5 border border-amber-500/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-amber-500/20 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-3 w-full sm:w-auto">
-            <img src={logoImg} alt="أسرة الكاروز" className="w-12 h-12 rounded-xl object-cover border border-amber-400/30 shadow-md" />
-            <div className="text-right">
-              <h1 className="text-xl font-black text-white">لوحة تحكم اليوم الرياضي 🏆</h1>
-              <p className="text-xs text-slate-400">أسرة الكاروز — البداري</p>
+            <img src={logoImg} alt="أسرة الكاروز" className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl object-cover border border-amber-400/30 shadow-md shrink-0" />
+            <div className="text-right flex-1 sm:flex-none">
+              <h1 className="text-lg sm:text-xl font-black text-white">لوحة تحكم اليوم الرياضي 🏆</h1>
+              <p className="text-[11px] sm:text-xs text-slate-400">أسرة الكاروز — البداري</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
             <button
               onClick={() => loadData(false)}
               disabled={isRefreshing}
-              className="px-3.5 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
+              className="flex-1 sm:flex-none px-3 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-50"
             >
               <span className={isRefreshing ? 'animate-spin' : ''}>🔄</span>
-              <span>{isRefreshing ? 'جاري التحديث...' : 'تحديث'}</span>
+              <span>{isRefreshing ? 'تحديث...' : 'تحديث'}</span>
             </button>
 
             <button
               onClick={handleExportCSV}
-              className="px-3.5 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95"
+              className="flex-1 sm:flex-none px-3 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
             >
               <span>📥</span>
               <span>تصدير Excel</span>
@@ -365,7 +365,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
 
             <button
               onClick={handleLogout}
-              className="px-3 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 text-xs font-bold transition-all cursor-pointer"
+              className="px-3 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 text-xs font-bold transition-all cursor-pointer shrink-0"
             >
               خروج 🚪
             </button>
@@ -373,65 +373,65 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
         </div>
 
         {/* ── 3 Big Clean KPI Cards ── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
           {/* Total Registrations */}
-          <div className="glass-card rounded-3xl p-5 border border-amber-500/20 text-right">
-            <p className="text-xs text-slate-400 font-bold mb-1">إجمالي المسجلين</p>
+          <div className="glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-amber-500/20 text-right">
+            <p className="text-[11px] sm:text-xs text-slate-400 font-bold mb-0.5">إجمالي المسجلين</p>
             <div className="flex items-baseline justify-between">
-              <h2 className="text-3xl font-black text-white">{summary.totalParticipants} <span className="text-xs text-slate-400 font-normal">مشارك</span></h2>
+              <h2 className="text-2xl sm:text-3xl font-black text-white">{summary.totalParticipants} <span className="text-xs text-slate-400 font-normal">مشارك</span></h2>
               <span className="text-2xl">👥</span>
             </div>
-            <div className="mt-3 pt-3 border-t border-white/10 flex justify-between text-xs font-bold">
+            <div className="mt-2.5 pt-2.5 border-t border-white/10 flex justify-between text-xs font-bold">
               <span className="text-blue-300">👦 {summary.totalMales} ولد ({summary.malePct}%)</span>
               <span className="text-pink-300">👧 {summary.totalFemales} بنت ({summary.femalePct}%)</span>
             </div>
           </div>
 
           {/* 6 Teams Average */}
-          <div className="glass-card rounded-3xl p-5 border border-blue-500/20 text-right">
-            <p className="text-xs text-slate-400 font-bold mb-1">توزيع الفرق الستة</p>
+          <div className="glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-blue-500/20 text-right">
+            <p className="text-[11px] sm:text-xs text-slate-400 font-bold mb-0.5">توزيع الفرق الستة</p>
             <div className="flex items-baseline justify-between">
-              <h2 className="text-3xl font-black text-blue-400">6 <span className="text-xs text-slate-400 font-normal">فرق</span></h2>
+              <h2 className="text-2xl sm:text-3xl font-black text-blue-400">6 <span className="text-xs text-slate-400 font-normal">فرق</span></h2>
               <span className="text-2xl">🛡️</span>
             </div>
-            <div className="mt-3 pt-3 border-t border-white/10 flex justify-between text-xs font-bold text-slate-300">
-              <span>متوسط الأعضاء: {summary.avgPerTeam} لاعب</span>
+            <div className="mt-2.5 pt-2.5 border-t border-white/10 flex justify-between text-xs font-bold text-slate-300">
+              <span>متوسط: {summary.avgPerTeam} لاعب</span>
               <span className="text-emerald-400">✓ متزن</span>
             </div>
           </div>
 
           {/* Friend Requests */}
-          <div className="glass-card rounded-3xl p-5 border border-emerald-500/20 text-right">
-            <p className="text-xs text-slate-400 font-bold mb-1">رغبات الأصدقاء</p>
+          <div className="glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-emerald-500/20 text-right">
+            <p className="text-[11px] sm:text-xs text-slate-400 font-bold mb-0.5">رغبات الأصدقاء</p>
             <div className="flex items-baseline justify-between">
-              <h2 className="text-3xl font-black text-emerald-400">{summary.totalFriendRequests} <span className="text-xs text-slate-400 font-normal">طلب</span></h2>
+              <h2 className="text-2xl sm:text-3xl font-black text-emerald-400">{summary.totalFriendRequests} <span className="text-xs text-slate-400 font-normal">طلب</span></h2>
               <span className="text-2xl">🤝</span>
             </div>
-            <div className="mt-3 pt-3 border-t border-white/10 flex justify-between text-xs font-bold">
+            <div className="mt-2.5 pt-2.5 border-t border-white/10 flex justify-between text-xs font-bold">
               <span className="text-emerald-300">✓ {summary.satisfiedRequests} مستوفى</span>
               <span className="text-amber-300">⏳ {summary.pendingRequests} معلق</span>
             </div>
           </div>
         </div>
 
-        {/* ── Simple Clean Tab Bar ── */}
-        <div className="flex items-center gap-2 border-b border-white/10 pb-2">
+        {/* ── Tab Bar (Optimized for mobile tabs) ── */}
+        <div className="flex items-center gap-1.5 sm:gap-2 border-b border-white/10 pb-2 overflow-x-auto scrollbar-none">
           {([
             { id: 'teams', label: '🛡️ الفرق الستة', count: 6 },
-            { id: 'participants', label: '👥 جدول المشتركين', count: summary.totalParticipants },
+            { id: 'participants', label: '👥 المشتركون', count: summary.totalParticipants },
             { id: 'friends', label: '🤝 طلبات الأصدقاء', count: summary.totalFriendRequests }
           ] as const).map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as TabType)}
-              className={`px-5 py-2.5 rounded-2xl font-bold text-sm transition-all cursor-pointer flex items-center gap-2 ${
+              className={`flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm transition-all cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'bg-amber-400 text-slate-950 font-black shadow-lg shadow-amber-400/20 scale-102'
-                  : 'text-slate-300 hover:text-white hover:bg-white/5'
+                  : 'text-slate-300 hover:text-white hover:bg-white/5 bg-white/5 sm:bg-transparent'
               }`}
             >
               <span>{tab.label}</span>
-              <span className={`px-2 py-0.5 rounded-full text-xs ${
+              <span className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs ${
                 activeTab === tab.id ? 'bg-slate-950/20 text-slate-950 font-black' : 'bg-white/10 text-amber-300'
               }`}>
                 {tab.count}
@@ -445,34 +445,34 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
         ══════════════════════════════════════════════════════════════════════ */}
         {activeTab === 'teams' && (
           <div className="space-y-4 animate-float-up">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {summary.teamStats.map(ts => (
                 <div
                   key={ts.team.id}
                   onClick={() => setSelectedTeamDetails(ts)}
-                  className="glass-card rounded-3xl p-5 border transition-all hover:scale-102 cursor-pointer relative overflow-hidden"
+                  className="glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-5 border transition-all hover:scale-102 active:scale-98 cursor-pointer relative overflow-hidden"
                   style={{
                     borderColor: `${ts.team.color}44`,
                     background: `linear-gradient(145deg, rgba(13,27,62,0.9), ${ts.team.bg}66)`
                   }}
                 >
-                  <div className="flex justify-between items-start mb-3">
+                  <div className="flex justify-between items-start mb-2.5">
                     <div className="flex items-center gap-2.5">
-                      <span className="text-3xl">{ts.team.emoji}</span>
+                      <span className="text-2xl sm:text-3xl">{ts.team.emoji}</span>
                       <div>
-                        <h3 className="text-lg font-black" style={{ color: ts.team.color }}>
+                        <h3 className="text-base sm:text-lg font-black" style={{ color: ts.team.color }}>
                           {ts.team.name}
                         </h3>
-                        <p className="text-xs text-slate-400">{ts.total} لاعب مسجل</p>
+                        <p className="text-[11px] sm:text-xs text-slate-400">{ts.total} لاعب مسجل</p>
                       </div>
                     </div>
-                    <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] sm:text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
                       ✓ متزن
                     </span>
                   </div>
 
                   {/* Progress */}
-                  <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden mb-3">
+                  <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden mb-2.5">
                     <div
                       className="h-full rounded-full"
                       style={{
@@ -482,10 +482,11 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                     />
                   </div>
 
-                  {/* Gender Split */}
+                  {/* Gender Split & Click cue */}
                   <div className="flex justify-between items-center text-xs font-bold pt-2 border-t border-white/10">
-                    <span className="text-blue-300">👦 {ts.males} أولاد ({ts.malePct}%)</span>
-                    <span className="text-pink-300">👧 {ts.females} بنات ({ts.femalePct}%)</span>
+                    <span className="text-blue-300">👦 {ts.males} ({ts.malePct}%)</span>
+                    <span className="text-pink-300">👧 {ts.females} ({ts.femalePct}%)</span>
+                    <span className="text-[10px] text-amber-300/80 font-normal">عرض القائمة ←</span>
                   </div>
                 </div>
               ))}
@@ -494,31 +495,31 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
         )}
 
         {/* ══════════════════════════════════════════════════════════════════════
-            TAB 2: PARTICIPANTS TABLE
+            TAB 2: PARTICIPANTS VIEW (DESKTOP TABLE + MOBILE CARD LIST)
         ══════════════════════════════════════════════════════════════════════ */}
         {activeTab === 'participants' && (
-          <div className="space-y-4 animate-float-up">
+          <div className="space-y-3 sm:space-y-4 animate-float-up">
 
             {/* Search & Team Filter Bar */}
-            <div className="glass-card rounded-2xl p-4 border border-amber-500/20 space-y-3">
+            <div className="glass-card rounded-2xl p-3 sm:p-4 border border-amber-500/20 space-y-2.5">
               <div className="relative">
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="ابحث بالاسم أو رقم الهاتف أو الصديق..."
+                  placeholder="ابحث بالاسم، الهاتف، أو الصديق..."
                   dir="rtl"
-                  className="w-full px-4 py-3 pr-10 rounded-xl text-white text-right outline-none text-sm"
+                  className="w-full px-4 py-2.5 sm:py-3 pr-9 sm:pr-10 rounded-xl text-white text-right outline-none text-xs sm:text-sm"
                   style={{
                     background: 'rgba(255,255,255,0.06)',
                     border: '1px solid rgba(245,166,35,0.25)'
                   }}
                 />
-                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm text-amber-400">🔍</span>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs sm:text-sm text-amber-400">🔍</span>
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white px-2 py-0.5 rounded bg-white/10 cursor-pointer"
+                    className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white px-2 py-0.5 rounded bg-white/10 cursor-pointer"
                   >
                     مسح ✕
                   </button>
@@ -542,8 +543,8 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                     <button
                       key={t.id}
                       onClick={() => setSelectedTeamFilter(t.id)}
-                      className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1 ${
-                        isSel ? 'ring-2 ring-amber-400' : 'opacity-80 hover:opacity-100'
+                      className={`px-2.5 py-1.5 rounded-xl font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1 ${
+                        isSel ? 'ring-2 ring-amber-400 scale-105' : 'opacity-80 hover:opacity-100'
                       }`}
                       style={{ background: t.bg, color: '#ffffff' }}
                     >
@@ -556,173 +557,313 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
               </div>
             </div>
 
-            {/* Clean Table */}
-            <div className="glass-card rounded-3xl border border-amber-500/20 overflow-hidden shadow-xl">
-              {filteredParticipants.length === 0 ? (
-                <p className="text-center py-12 text-slate-400 text-sm">لا توجد نتائج مطابقة</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-right text-sm">
-                    <thead>
-                      <tr className="border-b border-white/10 bg-white/5 text-slate-300 text-xs font-bold">
-                        <th className="py-3 px-4">#</th>
-                        <th className="py-3 px-4">الاسم</th>
-                        <th className="py-3 px-4">الواتساب</th>
-                        <th className="py-3 px-4 text-center">النوع</th>
-                        <th className="py-3 px-4 text-center">الفريق</th>
-                        <th className="py-3 px-4">الأصدقاء</th>
-                        <th className="py-3 px-4 text-center">إجراء</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {filteredParticipants.map((p, idx) => {
-                        const team = getTeamById(p.team)
-                        return (
-                          <tr key={p.id} className="hover:bg-white/5 transition-colors">
-                            <td className="py-3 px-4 text-slate-500 text-xs font-mono">{idx + 1}</td>
-                            <td className="py-3 px-4 font-bold text-white whitespace-nowrap">
-                              <button
-                                onClick={() => setSelectedParticipant(p)}
-                                className="hover:text-amber-300 transition-colors text-right cursor-pointer"
-                              >
-                                {p.name}
-                              </button>
-                            </td>
-                            <td className="py-3 px-4 whitespace-nowrap" dir="ltr">
-                              <a
-                                href={`https://wa.me/2${normalizePhone(p.phone)}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-emerald-400 hover:underline font-mono text-xs inline-flex items-center gap-1"
-                              >
-                                <span>💬</span>
-                                <span>{normalizePhone(p.phone)}</span>
-                              </a>
-                            </td>
-                            <td className="py-3 px-4 text-center whitespace-nowrap text-xs">
+            {/* Content: Empty State */}
+            {filteredParticipants.length === 0 ? (
+              <div className="glass-card rounded-2xl p-8 text-center text-slate-400 text-sm border border-amber-500/20">
+                لا توجد نتائج مطابقة للبحث أو الفلتر
+              </div>
+            ) : (
+              <>
+                {/* ── MOBILE VIEW: 100% WIDTH RESPONSIVE CARDS (ZERO HORIZONTAL SCROLL) ── */}
+                <div className="block md:hidden space-y-2.5">
+                  {filteredParticipants.map((p, idx) => {
+                    const team = getTeamById(p.team)
+                    return (
+                      <div
+                        key={p.id}
+                        className="glass-card rounded-2xl p-3.5 border border-white/10 space-y-2.5 text-right transition-all"
+                        style={{
+                          background: 'linear-gradient(135deg, rgba(13,27,62,0.85), rgba(4,13,30,0.95))',
+                          borderRight: `4px solid ${team.color}`
+                        }}
+                      >
+                        {/* Header: Name + Team Badge */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-mono text-slate-500">#{idx + 1}</span>
+                            <span className="font-black text-white text-sm leading-tight">
+                              {p.name}
+                            </span>
+                          </div>
+                          <span
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold shrink-0"
+                            style={{ background: team.bg, color: team.color }}
+                          >
+                            <span>{team.emoji}</span>
+                            <span>{team.name}</span>
+                          </span>
+                        </div>
+
+                        {/* Middle: Phone / WhatsApp + Gender */}
+                        <div className="flex items-center justify-between text-xs pt-1 border-t border-white/5">
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 rounded bg-white/5 text-slate-300 font-semibold text-[11px]">
                               {p.gender === 'male' ? '👦 ولد' : '👧 بنت'}
-                            </td>
-                            <td className="py-3 px-4 text-center whitespace-nowrap">
-                              <span
-                                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-bold"
-                                style={{ background: team.bg, color: team.color }}
-                              >
-                                <span>{team.emoji}</span>
-                                <span>{team.name}</span>
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 text-xs text-amber-300">
-                              {p.wantsFriends && p.friendNames.length > 0 ? p.friendNames.join(' ، ') : '—'}
-                            </td>
-                            <td className="py-3 px-4 text-center whitespace-nowrap">
-                              <button
-                                onClick={() => {
-                                  setTransferParticipant(p)
-                                  setTransferTargetTeam(p.team)
-                                }}
-                                className="px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 text-xs font-bold cursor-pointer"
-                              >
-                                نقل الفريق 🔄
-                              </button>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
+                            </span>
+                          </div>
+
+                          <a
+                            href={`https://wa.me/2${normalizePhone(p.phone)}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-emerald-400 hover:text-emerald-300 font-mono text-xs inline-flex items-center gap-1 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20"
+                            dir="ltr"
+                          >
+                            <span>💬</span>
+                            <span>{normalizePhone(p.phone)}</span>
+                          </a>
+                        </div>
+
+                        {/* Friends Requested (if any) */}
+                        {p.wantsFriends && p.friendNames.length > 0 && (
+                          <div className="text-xs bg-amber-500/10 border border-amber-500/15 rounded-xl p-2 text-amber-300 leading-relaxed">
+                            <span className="font-bold text-amber-400 ml-1">🤝 الأصدقاء:</span>
+                            <span>{p.friendNames.join(' ، ')}</span>
+                          </div>
+                        )}
+
+                        {/* Actions */}
+                        <div className="pt-1 flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => {
+                              setTransferParticipant(p)
+                              setTransferTargetTeam(p.team)
+                            }}
+                            className="w-full py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 active:scale-98 text-amber-300 text-xs font-bold border border-amber-500/30 cursor-pointer flex items-center justify-center gap-1.5"
+                          >
+                            <span>نقل الفريق</span>
+                            <span>🔄</span>
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
-              )}
-            </div>
+
+                {/* ── DESKTOP VIEW: CLEAN TABLE ── */}
+                <div className="hidden md:block glass-card rounded-3xl border border-amber-500/20 overflow-hidden shadow-xl">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-right text-sm">
+                      <thead>
+                        <tr className="border-b border-white/10 bg-white/5 text-slate-300 text-xs font-bold">
+                          <th className="py-3 px-4">#</th>
+                          <th className="py-3 px-4">الاسم</th>
+                          <th className="py-3 px-4">الواتساب</th>
+                          <th className="py-3 px-4 text-center">النوع</th>
+                          <th className="py-3 px-4 text-center">الفريق</th>
+                          <th className="py-3 px-4">الأصدقاء</th>
+                          <th className="py-3 px-4 text-center">إجراء</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {filteredParticipants.map((p, idx) => {
+                          const team = getTeamById(p.team)
+                          return (
+                            <tr key={p.id} className="hover:bg-white/5 transition-colors">
+                              <td className="py-3 px-4 text-slate-500 text-xs font-mono">{idx + 1}</td>
+                              <td className="py-3 px-4 font-bold text-white whitespace-nowrap">
+                                {p.name}
+                              </td>
+                              <td className="py-3 px-4 whitespace-nowrap" dir="ltr">
+                                <a
+                                  href={`https://wa.me/2${normalizePhone(p.phone)}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-emerald-400 hover:underline font-mono text-xs inline-flex items-center gap-1"
+                                >
+                                  <span>💬</span>
+                                  <span>{normalizePhone(p.phone)}</span>
+                                </a>
+                              </td>
+                              <td className="py-3 px-4 text-center whitespace-nowrap text-xs">
+                                {p.gender === 'male' ? '👦 ولد' : '👧 بنت'}
+                              </td>
+                              <td className="py-3 px-4 text-center whitespace-nowrap">
+                                <span
+                                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-bold"
+                                  style={{ background: team.bg, color: team.color }}
+                                >
+                                  <span>{team.emoji}</span>
+                                  <span>{team.name}</span>
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-xs text-amber-300">
+                                {p.wantsFriends && p.friendNames.length > 0 ? p.friendNames.join(' ، ') : '—'}
+                              </td>
+                              <td className="py-3 px-4 text-center whitespace-nowrap">
+                                <button
+                                  onClick={() => {
+                                    setTransferParticipant(p)
+                                    setTransferTargetTeam(p.team)
+                                  }}
+                                  className="px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 text-xs font-bold cursor-pointer"
+                                >
+                                  نقل الفريق 🔄
+                                </button>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </>
+            )}
 
           </div>
         )}
 
         {/* ══════════════════════════════════════════════════════════════════════
-            TAB 3: FRIEND REQUESTS
+            TAB 3: FRIEND REQUESTS (DESKTOP TABLE + MOBILE CARD LIST)
         ══════════════════════════════════════════════════════════════════════ */}
         {activeTab === 'friends' && (
-          <div className="space-y-4 animate-float-up">
+          <div className="space-y-3 sm:space-y-4 animate-float-up">
 
             {/* Filter Toggle */}
-            <div className="flex gap-2">
+            <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 scrollbar-none">
               <button
                 onClick={() => setFriendsFilterMode('all')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                   friendsFilterMode === 'all' ? 'bg-amber-400 text-slate-950 font-black' : 'glass-card text-slate-300'
                 }`}
               >
-                كل الطلبات ({summary.totalFriendRequests})
+                الكل ({summary.totalFriendRequests})
               </button>
               <button
                 onClick={() => setFriendsFilterMode('pending')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                   friendsFilterMode === 'pending' ? 'bg-amber-400 text-slate-950 font-black' : 'glass-card text-slate-300'
                 }`}
               >
-                ⏳ المعلقة فقط - لم يسجل الصديق بعد ({summary.pendingRequests})
+                ⏳ المعلقة ({summary.pendingRequests})
               </button>
               <button
                 onClick={() => setFriendsFilterMode('satisfied')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                   friendsFilterMode === 'satisfied' ? 'bg-amber-400 text-slate-950 font-black' : 'glass-card text-slate-300'
                 }`}
               >
-                ✓ المستوفاة في نفس الفريق ({summary.satisfiedRequests})
+                ✓ المستوفاة ({summary.satisfiedRequests})
               </button>
             </div>
 
-            {/* Requests Table */}
-            <div className="glass-card rounded-3xl border border-amber-500/20 overflow-hidden shadow-xl">
-              {filteredFriendRequests.length === 0 ? (
-                <p className="text-center py-12 text-slate-400 text-sm">لا توجد طلبات في هذا القسم</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-right text-sm">
-                    <thead>
-                      <tr className="border-b border-white/10 bg-white/5 text-slate-300 text-xs font-bold">
-                        <th className="py-3 px-4">#</th>
-                        <th className="py-3 px-4">صاحب الطلب</th>
-                        <th className="py-3 px-4">فريقه</th>
-                        <th className="py-3 px-4">الصديق المطلوب</th>
-                        <th className="py-3 px-4">حالة الصديق</th>
-                        <th className="py-3 px-4 text-center">حالة الطلب</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {filteredFriendRequests.map((req, rIdx) => {
-                        const reqTeam = getTeamById(req.requesterTeam)
-                        return (
-                          <tr key={req.id || rIdx} className="hover:bg-white/5 transition-colors">
-                            <td className="py-3 px-4 text-slate-500 text-xs font-mono">{rIdx + 1}</td>
-                            <td className="py-3 px-4 font-bold text-white">{req.requesterName}</td>
-                            <td className="py-3 px-4">
-                              <span
-                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold"
-                                style={{ background: reqTeam.bg, color: reqTeam.color }}
-                              >
-                                <span>{reqTeam.emoji}</span>
-                                <span>{reqTeam.name}</span>
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 font-bold text-amber-300">{req.requestedName}</td>
-                            <td className="py-3 px-4 text-xs">
+            {/* Content: Empty State */}
+            {filteredFriendRequests.length === 0 ? (
+              <div className="glass-card rounded-2xl p-8 text-center text-slate-400 text-sm border border-amber-500/20">
+                لا توجد طلبات في هذا القسم
+              </div>
+            ) : (
+              <>
+                {/* ── MOBILE VIEW: 100% WIDTH RESPONSIVE FRIEND REQUEST CARDS ── */}
+                <div className="block md:hidden space-y-2.5">
+                  {filteredFriendRequests.map((req, rIdx) => {
+                    const reqTeam = getTeamById(req.requesterTeam)
+                    return (
+                      <div
+                        key={req.id || rIdx}
+                        className="glass-card rounded-2xl p-3.5 border border-white/10 space-y-2.5 text-right transition-all"
+                        style={{
+                          background: 'linear-gradient(135deg, rgba(13,27,62,0.85), rgba(4,13,30,0.95))',
+                          borderRight: `4px solid ${reqTeam.color}`
+                        }}
+                      >
+                        {/* Top: Requester & Team */}
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-mono text-slate-500">#{rIdx + 1}</span>
+                            <span className="font-bold text-white text-xs">
+                              {req.requesterName}
+                            </span>
+                          </div>
+                          <span
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold"
+                            style={{ background: reqTeam.bg, color: reqTeam.color }}
+                          >
+                            <span>{reqTeam.emoji}</span>
+                            <span>{reqTeam.name}</span>
+                          </span>
+                        </div>
+
+                        {/* Middle: Requested Friend + Match Info */}
+                        <div className="bg-white/5 rounded-xl p-2.5 space-y-1 text-xs border border-white/5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-400 text-[11px]">طلب الصديق:</span>
+                            <span className="font-bold text-amber-300 text-xs">{req.requestedName}</span>
+                          </div>
+                          <div className="flex items-center justify-between pt-1 border-t border-white/5">
+                            <span className="text-slate-400 text-[11px]">حالة التسجيل:</span>
+                            <span className="text-xs">
                               {req.matchedParticipant ? (
-                                <span className="text-slate-200">
+                                <span className="text-slate-200 font-semibold">
                                   مسجل في {getTeamById(req.matchedParticipant.team).name}
                                 </span>
                               ) : (
-                                <span className="text-slate-500 italic">لم يسجل بعد</span>
+                                <span className="text-slate-400 italic">لم يسجل بعد</span>
                               )}
-                            </td>
-                            <td className="py-3 px-4 text-center">{renderStatusBadge(req.status)}</td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Bottom: Status Badge */}
+                        <div className="flex justify-end pt-0.5">
+                          {renderStatusBadge(req.status)}
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
-              )}
-            </div>
+
+                {/* ── DESKTOP VIEW: CLEAN TABLE ── */}
+                <div className="hidden md:block glass-card rounded-3xl border border-amber-500/20 overflow-hidden shadow-xl">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-right text-sm">
+                      <thead>
+                        <tr className="border-b border-white/10 bg-white/5 text-slate-300 text-xs font-bold">
+                          <th className="py-3 px-4">#</th>
+                          <th className="py-3 px-4">صاحب الطلب</th>
+                          <th className="py-3 px-4">فريقه</th>
+                          <th className="py-3 px-4">الصديق المطلوب</th>
+                          <th className="py-3 px-4">حالة الصديق</th>
+                          <th className="py-3 px-4 text-center">حالة الطلب</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {filteredFriendRequests.map((req, rIdx) => {
+                          const reqTeam = getTeamById(req.requesterTeam)
+                          return (
+                            <tr key={req.id || rIdx} className="hover:bg-white/5 transition-colors">
+                              <td className="py-3 px-4 text-slate-500 text-xs font-mono">{rIdx + 1}</td>
+                              <td className="py-3 px-4 font-bold text-white">{req.requesterName}</td>
+                              <td className="py-3 px-4">
+                                <span
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold"
+                                  style={{ background: reqTeam.bg, color: reqTeam.color }}
+                                >
+                                  <span>{reqTeam.emoji}</span>
+                                  <span>{reqTeam.name}</span>
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 font-bold text-amber-300">{req.requestedName}</td>
+                              <td className="py-3 px-4 text-xs">
+                                {req.matchedParticipant ? (
+                                  <span className="text-slate-200">
+                                    مسجل في {getTeamById(req.matchedParticipant.team).name}
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-500 italic">لم يسجل بعد</span>
+                                )}
+                              </td>
+                              <td className="py-3 px-4 text-center">{renderStatusBadge(req.status)}</td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </>
+            )}
 
           </div>
         )}
@@ -731,16 +872,16 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
 
       {/* ── Modal: Team Roster ── */}
       {selectedTeamDetails && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-float-up">
-          <div className="glass-card rounded-3xl p-6 max-w-lg w-full gold-glow border border-amber-500/30 max-h-[85vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-float-up">
+          <div className="glass-card rounded-3xl p-5 sm:p-6 max-w-lg w-full gold-glow border border-amber-500/30 max-h-[85vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center gap-2">
-                <span className="text-3xl">{selectedTeamDetails.team.emoji}</span>
+                <span className="text-2xl sm:text-3xl">{selectedTeamDetails.team.emoji}</span>
                 <div>
-                  <h3 className="text-xl font-black" style={{ color: selectedTeamDetails.team.color }}>
+                  <h3 className="text-lg sm:text-xl font-black" style={{ color: selectedTeamDetails.team.color }}>
                     {selectedTeamDetails.team.name}
                   </h3>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-[11px] sm:text-xs text-slate-400">
                     {selectedTeamDetails.total} لاعب ({selectedTeamDetails.males} أولاد • {selectedTeamDetails.females} بنات)
                   </p>
                 </div>
@@ -778,9 +919,9 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
 
       {/* ── Modal: Manual Transfer ── */}
       {transferParticipant && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-float-up">
-          <div className="glass-card rounded-3xl p-6 max-w-sm w-full gold-glow border border-amber-500/40">
-            <h3 className="text-lg font-black text-white text-center mb-1">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-float-up">
+          <div className="glass-card rounded-3xl p-5 sm:p-6 max-w-sm w-full gold-glow border border-amber-500/40">
+            <h3 className="text-base sm:text-lg font-black text-white text-center mb-1">
               نقل المشترك إلى فريق آخر
             </h3>
             <p className="text-slate-400 text-xs text-center mb-4">
