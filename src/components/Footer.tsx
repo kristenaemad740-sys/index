@@ -12,7 +12,7 @@ export default function Footer() {
         <p className="text-slate-500 text-xs">اليوم الرياضي للشباب</p>
         <div className="mt-3 pt-3 border-t border-white/5 w-full max-w-xs">
           <p className="text-amber-400/90 text-xs font-semibold tracking-wider">
-            Created by Eng. ShakerT
+            Created by Eng. Shaker
           </p>
         </div>
       </div>
